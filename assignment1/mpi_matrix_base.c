@@ -112,7 +112,13 @@ int main(int argc, char *argv[])
       printf("Done in %f seconds.\n", finish - start);
 
       /* Compare results with those from brute force */
+      // start = MPI_Wtime();
+
       brute_force_matmul(a, b, bfRes);
+
+      // finish = MPI_Wtime();
+      // printf("Brute force done in %f seconds.\n", finish - start);
+
       if (!checkRes(bfRes, c)) {
          printf("ERROR: mismatch!\n");
       } else {
@@ -144,7 +150,7 @@ int main(int argc, char *argv[])
          A_local, myrows*MAT_SIZE, MPI_DOUBLE,
          0, MPI_COMM_WORLD);
       
-      // local computation
+      /* Compute its own piece */
       for (int i = 0; i < myrows; i++) {
          for (int k = 0; k < MAT_SIZE; k++) {
             double aik = A_local[i*MAT_SIZE + k];

@@ -1,5 +1,6 @@
 #include <mpi.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MAT_SIZE 500
 
@@ -30,63 +31,145 @@ int checkRes(const double target[MAT_SIZE][MAT_SIZE], const double res[MAT_SIZE]
 
 int main(int argc, char *argv[])
 {
-   int rank;
-   int mpiSize;
-   double a[MAT_SIZE][MAT_SIZE],    /* matrix A to be multiplied */
-       b[MAT_SIZE][MAT_SIZE],       /* matrix B to be multiplied */
-       c[MAT_SIZE][MAT_SIZE],       /* result matrix C */
-       bfRes[MAT_SIZE][MAT_SIZE];   /* brute force result bfRes */
-
-   MPI_Init(NULL, NULL);
-
-   // Get the number of processes
-   MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-
-   // Get the rank of the process
-   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+   int rank, mpiSize;
+   double a[MAT_SIZE][MAT_SIZE],      /* matrix A to be multiplied */
+         b[MAT_SIZE][MAT_SIZE],       /* matrix B to be multiplied */
+         c[MAT_SIZE][MAT_SIZE],       /* result matrix C */
+         bfRes[MAT_SIZE][MAT_SIZE];   /* brute force result bfRes */
 
    /* You need to intialize MPI here */
+   MPI_Init(&argc, &argv);
+   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+   MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 
-   if (rank == 0)
-   {
-      /* root */
+   int *sendcounts = malloc(mpiSize * sizeof(int));
+   int *displs     = malloc(mpiSize * sizeof(int));
 
+   int myrows = 0; // rows of matrix A assigned to each process
+
+   /* root */
+   if (rank == 0) {
       /* First, fill some numbers into the matrix */
-      for (int i = 0; i < MAT_SIZE; i++){
-         for (int j = 0; j < MAT_SIZE; j++){
-            a[i][j] = i + j;
-            b[i][j] = i * j;
+      for (int i = 0; i < MAT_SIZE; i++) {
+         for (int j = 0; j < MAT_SIZE; j++) {
+                a[i][j] = i + j;
+                b[i][j] = i * j;
+                c[i][j] = 0.0;
          }
       }
 
-      /* Measure start time */
       double start = MPI_Wtime();
-
+   
       /* Send matrix data to the worker tasks */
+      MPI_Bcast(&b[0][0], MAT_SIZE*MAT_SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+      // split A by row
+      int rows_per_proc = MAT_SIZE / mpiSize;
+      int rem = MAT_SIZE % mpiSize;
+      int offset = 0;
+      for (int p = 0; p < mpiSize; p++) {
+         int rows = rows_per_proc + (p < rem ? 1 : 0);
+         sendcounts[p] = rows * MAT_SIZE;     // number of elements
+         displs[p]     = offset * MAT_SIZE;   // displacement (in elements)
+         offset += rows;
+      }
+      myrows = sendcounts[rank] / MAT_SIZE;
+
+      // each process's local buffer
+      double *A_local = malloc((size_t)myrows * MAT_SIZE * sizeof(double));
+      double *C_local = calloc((size_t)myrows * MAT_SIZE, sizeof(double));
+
+      // distribute rows of A
+      MPI_Scatterv(&a[0][0], sendcounts, displs, MPI_DOUBLE,
+         A_local, myrows*MAT_SIZE, MPI_DOUBLE,
+         0, MPI_COMM_WORLD);
 
       /* Compute its own piece */
+      for (int i = 0; i < myrows; i++) {
+         for (int k = 0; k < MAT_SIZE; k++) {
+               double a_k = A_local[i*MAT_SIZE + k];
+               for (int j = 0; j < MAT_SIZE; j++) {
+                  C_local[i*MAT_SIZE + j] += a_k * b[k][j];
+               }
+         }
+      }
+
+      MPI_Barrier(MPI_COMM_WORLD);
 
       /* Receive results from worker tasks */
+      MPI_Gatherv(C_local, myrows*MAT_SIZE, MPI_DOUBLE,
+                &c[0][0], sendcounts, displs, MPI_DOUBLE,
+                0, MPI_COMM_WORLD);
+
+      free(A_local);
+      free(C_local);
+
+      MPI_Barrier(MPI_COMM_WORLD);
 
       /* Measure finish time */
       double finish = MPI_Wtime();
+      
       printf("Done in %f seconds.\n", finish - start);
 
       /* Compare results with those from brute force */
-      brute_force_matmul(a, b, bfRes);      
+      brute_force_matmul(a, b, bfRes);
       if (!checkRes(bfRes, c)) {
-         printf("ERROR: Your calculation is not the same as the brute force result, please check!\n");
+         printf("ERROR: mismatch!\n");
       } else {
          printf("Result is correct.\n");
       }
-   }
-   else
-   {
+
+   }else{
       /* worker */
       /* Receive data from root and compute, then send back to root */
+      MPI_Bcast(&b[0][0], MAT_SIZE*MAT_SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      // spilt A by row
+      int rows_per_proc = MAT_SIZE / mpiSize;
+      int rem = MAT_SIZE % mpiSize;
+      int offset = 0;
+      for (int p = 0; p < mpiSize; p++) {
+         int rows = rows_per_proc + (p < rem ? 1 : 0);
+         sendcounts[p] = rows * MAT_SIZE;     // number of elements
+         displs[p]     = offset * MAT_SIZE;   // displacement (in elements)
+         offset += rows;
+      }
+      myrows = sendcounts[rank] / MAT_SIZE;
+
+      // each process's local buffer
+      double *A_local = malloc((size_t)myrows * MAT_SIZE * sizeof(double));
+      double *C_local = calloc((size_t)myrows * MAT_SIZE, sizeof(double));
+
+      // distribute rows of A
+      MPI_Scatterv(&a[0][0], sendcounts, displs, MPI_DOUBLE,
+         A_local, myrows*MAT_SIZE, MPI_DOUBLE,
+         0, MPI_COMM_WORLD);
+      
+      // local computation
+      for (int i = 0; i < myrows; i++) {
+         for (int k = 0; k < MAT_SIZE; k++) {
+            double aik = A_local[i*MAT_SIZE + k];
+            for (int j = 0; j < MAT_SIZE; j++) {
+               C_local[i*MAT_SIZE + j] += aik * b[k][j];
+            }
+         }
+      }
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      MPI_Gatherv(C_local, myrows*MAT_SIZE, MPI_DOUBLE,
+         &c[0][0], sendcounts, displs, MPI_DOUBLE,
+         0, MPI_COMM_WORLD);
+
+      free(A_local);
+      free(C_local);
+
+      MPI_Barrier(MPI_COMM_WORLD);
    }
+
+   free(sendcounts);
+   free(displs);
 
    /* Don't forget to finalize your MPI application */
    MPI_Finalize();
+   return 0;
 }

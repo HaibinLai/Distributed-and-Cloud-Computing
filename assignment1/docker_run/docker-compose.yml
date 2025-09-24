@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  node1:
+    build: .
+    container_name: node1
+    hostname: node1
+    networks: [cluster]
+    volumes:
+      - ./work:/workspace
+    ports:
+      - "2201:22"   # 便于你从宿主机调试 ssh 进去（集群内部互联不依赖这个映射）
+
+  node2:
+    build: .
+    container_name: node2
+    hostname: node2
+    networks: [cluster]
+    volumes:
+      - ./work:/workspace
+    ports:
+      - "2202:22"
+
+  node3:
+    build: .
+    container_name: node3
+    hostname: node3
+    networks: [cluster]
+    volumes:
+      - ./work:/workspace
+    ports:
+      - "2203:22"
+
+networks:
+  cluster:
+    driver: bridge

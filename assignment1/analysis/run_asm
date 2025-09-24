@@ -1,0 +1,2917 @@
+	.file	"mpi_matrix_base.c"
+	.intel_syntax noprefix
+# GNU C17 (Ubuntu 9.4.0-1ubuntu1~20.04.2) version 9.4.0 (x86_64-linux-gnu)
+#	compiled by GNU C version 9.4.0, GMP version 6.2.0, MPFR version 4.0.2, MPC version 1.1.0, isl version isl-0.22.1-GMP
+
+# GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+# options passed:  -I /home/haibin/intel/oneapi/mpi/2021.15/include
+# -imultiarch x86_64-linux-gnu mpi_matrix_base.c -masm=intel -mtune=generic
+# -march=x86-64 -auxbase-strip run_asm -g -fverbose-asm
+# -fasynchronous-unwind-tables -fstack-protector-strong -Wformat
+# -Wformat-security -fstack-clash-protection -fcf-protection
+# options enabled:  -fPIC -fPIE -faggressive-loop-optimizations
+# -fassume-phsa -fasynchronous-unwind-tables -fauto-inc-dec -fcommon
+# -fdelete-null-pointer-checks -fdwarf2-cfi-asm -fearly-inlining
+# -feliminate-unused-debug-types -ffp-int-builtin-inexact -ffunction-cse
+# -fgcse-lm -fgnu-runtime -fgnu-unique -fident -finline-atomics
+# -fipa-stack-alignment -fira-hoist-pressure -fira-share-save-slots
+# -fira-share-spill-slots -fivopts -fkeep-static-consts
+# -fleading-underscore -flifetime-dse -flto-odr-type-merging -fmath-errno
+# -fmerge-debug-strings -fpeephole -fplt -fprefetch-loop-arrays
+# -freg-struct-return -fsched-critical-path-heuristic
+# -fsched-dep-count-heuristic -fsched-group-heuristic -fsched-interblock
+# -fsched-last-insn-heuristic -fsched-rank-heuristic -fsched-spec
+# -fsched-spec-insn-heuristic -fsched-stalled-insns-dep -fschedule-fusion
+# -fsemantic-interposition -fshow-column -fshrink-wrap-separate
+# -fsigned-zeros -fsplit-ivs-in-unroller -fssa-backprop
+# -fstack-clash-protection -fstack-protector-strong -fstdarg-opt
+# -fstrict-volatile-bitfields -fsync-libcalls -ftrapping-math -ftree-cselim
+# -ftree-forwprop -ftree-loop-if-convert -ftree-loop-im -ftree-loop-ivcanon
+# -ftree-loop-optimize -ftree-parallelize-loops= -ftree-phiprop
+# -ftree-reassoc -ftree-scev-cprop -funit-at-a-time -funwind-tables
+# -fverbose-asm -fzero-initialized-in-bss -m128bit-long-double -m64 -m80387
+# -malign-stringops -mavx256-split-unaligned-load
+# -mavx256-split-unaligned-store -mfancy-math-387 -mfp-ret-in-387 -mfxsr
+# -mglibc -mieee-fp -mlong-double-80 -mmmx -mno-sse4 -mpush-args -mred-zone
+# -msse -msse2 -mstv -mtls-direct-seg-refs -mvzeroupper
+
+	.text
+.Ltext0:
+	.globl	brute_force_matmul
+	.type	brute_force_matmul, @function
+brute_force_matmul:
+.LFB6:
+	.file 1 "mpi_matrix_base.c"
+	.loc 1 8 57
+	.cfi_startproc
+	endbr64	
+	push	rbp	#
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	mov	rbp, rsp	#,
+	.cfi_def_cfa_register 6
+	mov	QWORD PTR -24[rbp], rdi	# mat1, mat1
+	mov	QWORD PTR -32[rbp], rsi	# mat2, mat2
+	mov	QWORD PTR -40[rbp], rdx	# res, res
+.LBB2:
+# mpi_matrix_base.c:10:     for (int i = 0; i < MAT_SIZE; ++i) {
+	.loc 1 10 14
+	mov	DWORD PTR -12[rbp], 0	# i,
+# mpi_matrix_base.c:10:     for (int i = 0; i < MAT_SIZE; ++i) {
+	.loc 1 10 5
+	jmp	.L2	#
+.L7:
+.LBB3:
+# mpi_matrix_base.c:11:         for (int j = 0; j < MAT_SIZE; ++j) {
+	.loc 1 11 18
+	mov	DWORD PTR -8[rbp], 0	# j,
+# mpi_matrix_base.c:11:         for (int j = 0; j < MAT_SIZE; ++j) {
+	.loc 1 11 9
+	jmp	.L3	#
+.L6:
+# mpi_matrix_base.c:12:             res[i][j] = 0;
+	.loc 1 12 16
+	mov	eax, DWORD PTR -12[rbp]	# tmp102, i
+	cdqe
+	imul	rdx, rax, 4000	# _2, _1,
+	mov	rax, QWORD PTR -40[rbp]	# tmp103, res
+	add	rdx, rax	# _3, tmp103
+# mpi_matrix_base.c:12:             res[i][j] = 0;
+	.loc 1 12 23
+	mov	eax, DWORD PTR -8[rbp]	# tmp105, j
+	cdqe
+	pxor	xmm0, xmm0	# tmp106
+	movsd	QWORD PTR [rdx+rax*8], xmm0	# *_3, tmp106
+.LBB4:
+# mpi_matrix_base.c:13:             for (int k = 0; k < MAT_SIZE; ++k) {
+	.loc 1 13 22
+	mov	DWORD PTR -4[rbp], 0	# k,
+# mpi_matrix_base.c:13:             for (int k = 0; k < MAT_SIZE; ++k) {
+	.loc 1 13 13
+	jmp	.L4	#
+.L5:
+# mpi_matrix_base.c:14:                 res[i][j] += mat1[i][k] * mat2[k][j];
+	.loc 1 14 27 discriminator 3
+	mov	eax, DWORD PTR -12[rbp]	# tmp107, i
+	cdqe
+	imul	rdx, rax, 4000	# _5, _4,
+	mov	rax, QWORD PTR -40[rbp]	# tmp108, res
+	add	rdx, rax	# _6, tmp108
+	mov	eax, DWORD PTR -8[rbp]	# tmp110, j
+	cdqe
+	movsd	xmm1, QWORD PTR [rdx+rax*8]	# _7, *_6
+# mpi_matrix_base.c:14:                 res[i][j] += mat1[i][k] * mat2[k][j];
+	.loc 1 14 34 discriminator 3
+	mov	eax, DWORD PTR -12[rbp]	# tmp111, i
+	cdqe
+	imul	rdx, rax, 4000	# _9, _8,
+	mov	rax, QWORD PTR -24[rbp]	# tmp112, mat1
+	add	rdx, rax	# _10, tmp112
+# mpi_matrix_base.c:14:                 res[i][j] += mat1[i][k] * mat2[k][j];
+	.loc 1 14 37 discriminator 3
+	mov	eax, DWORD PTR -4[rbp]	# tmp114, k
+	cdqe
+	movsd	xmm2, QWORD PTR [rdx+rax*8]	# _11, *_10
+# mpi_matrix_base.c:14:                 res[i][j] += mat1[i][k] * mat2[k][j];
+	.loc 1 14 47 discriminator 3
+	mov	eax, DWORD PTR -4[rbp]	# tmp115, k
+	cdqe
+	imul	rdx, rax, 4000	# _13, _12,
+	mov	rax, QWORD PTR -32[rbp]	# tmp116, mat2
+	add	rdx, rax	# _14, tmp116
+# mpi_matrix_base.c:14:                 res[i][j] += mat1[i][k] * mat2[k][j];
+	.loc 1 14 50 discriminator 3
+	mov	eax, DWORD PTR -8[rbp]	# tmp118, j
+	cdqe
+	movsd	xmm0, QWORD PTR [rdx+rax*8]	# _15, *_14
+# mpi_matrix_base.c:14:                 res[i][j] += mat1[i][k] * mat2[k][j];
+	.loc 1 14 41 discriminator 3
+	mulsd	xmm0, xmm2	# _16, _11
+# mpi_matrix_base.c:14:                 res[i][j] += mat1[i][k] * mat2[k][j];
+	.loc 1 14 27 discriminator 3
+	mov	eax, DWORD PTR -12[rbp]	# tmp119, i
+	cdqe
+	imul	rdx, rax, 4000	# _18, _17,
+	mov	rax, QWORD PTR -40[rbp]	# tmp120, res
+	add	rdx, rax	# _19, tmp120
+	addsd	xmm0, xmm1	# _20, _7
+	mov	eax, DWORD PTR -8[rbp]	# tmp122, j
+	cdqe
+	movsd	QWORD PTR [rdx+rax*8], xmm0	# *_19, _20
+# mpi_matrix_base.c:13:             for (int k = 0; k < MAT_SIZE; ++k) {
+	.loc 1 13 43 discriminator 3
+	add	DWORD PTR -4[rbp], 1	# k,
+.L4:
+# mpi_matrix_base.c:13:             for (int k = 0; k < MAT_SIZE; ++k) {
+	.loc 1 13 13 discriminator 1
+	cmp	DWORD PTR -4[rbp], 499	# k,
+	jle	.L5	#,
+.LBE4:
+# mpi_matrix_base.c:11:         for (int j = 0; j < MAT_SIZE; ++j) {
+	.loc 1 11 39 discriminator 2
+	add	DWORD PTR -8[rbp], 1	# j,
+.L3:
+# mpi_matrix_base.c:11:         for (int j = 0; j < MAT_SIZE; ++j) {
+	.loc 1 11 9 discriminator 1
+	cmp	DWORD PTR -8[rbp], 499	# j,
+	jle	.L6	#,
+.LBE3:
+# mpi_matrix_base.c:10:     for (int i = 0; i < MAT_SIZE; ++i) {
+	.loc 1 10 35 discriminator 2
+	add	DWORD PTR -12[rbp], 1	# i,
+.L2:
+# mpi_matrix_base.c:10:     for (int i = 0; i < MAT_SIZE; ++i) {
+	.loc 1 10 5 discriminator 1
+	cmp	DWORD PTR -12[rbp], 499	# i,
+	jle	.L7	#,
+.LBE2:
+# mpi_matrix_base.c:18: }
+	.loc 1 18 1
+	nop	
+	nop	
+	pop	rbp	#
+	.cfi_def_cfa 7, 8
+	ret	
+	.cfi_endproc
+.LFE6:
+	.size	brute_force_matmul, .-brute_force_matmul
+	.globl	checkRes
+	.type	checkRes, @function
+checkRes:
+.LFB7:
+	.loc 1 20 93
+	.cfi_startproc
+	endbr64	
+	push	rbp	#
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	mov	rbp, rsp	#,
+	.cfi_def_cfa_register 6
+	mov	QWORD PTR -24[rbp], rdi	# target, target
+	mov	QWORD PTR -32[rbp], rsi	# res, res
+.LBB5:
+# mpi_matrix_base.c:22:    for (int i = 0; i < MAT_SIZE; ++i) {
+	.loc 1 22 13
+	mov	DWORD PTR -8[rbp], 0	# i,
+# mpi_matrix_base.c:22:    for (int i = 0; i < MAT_SIZE; ++i) {
+	.loc 1 22 4
+	jmp	.L9	#
+.L15:
+.LBB6:
+# mpi_matrix_base.c:23:       for (int j = 0; j < MAT_SIZE; ++j) {
+	.loc 1 23 16
+	mov	DWORD PTR -4[rbp], 0	# j,
+# mpi_matrix_base.c:23:       for (int j = 0; j < MAT_SIZE; ++j) {
+	.loc 1 23 7
+	jmp	.L10	#
+.L14:
+# mpi_matrix_base.c:24:          if (res[i][j] != target[i][j]) {
+	.loc 1 24 17
+	mov	eax, DWORD PTR -8[rbp]	# tmp92, i
+	cdqe
+	imul	rdx, rax, 4000	# _2, _1,
+	mov	rax, QWORD PTR -32[rbp]	# tmp93, res
+	add	rdx, rax	# _3, tmp93
+# mpi_matrix_base.c:24:          if (res[i][j] != target[i][j]) {
+	.loc 1 24 20
+	mov	eax, DWORD PTR -4[rbp]	# tmp95, j
+	cdqe
+	movsd	xmm0, QWORD PTR [rdx+rax*8]	# _4, *_3
+# mpi_matrix_base.c:24:          if (res[i][j] != target[i][j]) {
+	.loc 1 24 33
+	mov	eax, DWORD PTR -8[rbp]	# tmp96, i
+	cdqe
+	imul	rdx, rax, 4000	# _6, _5,
+	mov	rax, QWORD PTR -24[rbp]	# tmp97, target
+	add	rdx, rax	# _7, tmp97
+# mpi_matrix_base.c:24:          if (res[i][j] != target[i][j]) {
+	.loc 1 24 36
+	mov	eax, DWORD PTR -4[rbp]	# tmp99, j
+	cdqe
+	movsd	xmm1, QWORD PTR [rdx+rax*8]	# _8, *_7
+# mpi_matrix_base.c:24:          if (res[i][j] != target[i][j]) {
+	.loc 1 24 13
+	ucomisd	xmm0, xmm1	# _4, _8
+	jp	.L16	#,
+	ucomisd	xmm0, xmm1	# _4, _8
+	je	.L17	#,
+.L16:
+# mpi_matrix_base.c:25:             return 0;
+	.loc 1 25 20
+	mov	eax, 0	# _11,
+	jmp	.L13	#
+.L17:
+# mpi_matrix_base.c:23:       for (int j = 0; j < MAT_SIZE; ++j) {
+	.loc 1 23 37 discriminator 2
+	add	DWORD PTR -4[rbp], 1	# j,
+.L10:
+# mpi_matrix_base.c:23:       for (int j = 0; j < MAT_SIZE; ++j) {
+	.loc 1 23 7 discriminator 1
+	cmp	DWORD PTR -4[rbp], 499	# j,
+	jle	.L14	#,
+.LBE6:
+# mpi_matrix_base.c:22:    for (int i = 0; i < MAT_SIZE; ++i) {
+	.loc 1 22 34 discriminator 2
+	add	DWORD PTR -8[rbp], 1	# i,
+.L9:
+# mpi_matrix_base.c:22:    for (int i = 0; i < MAT_SIZE; ++i) {
+	.loc 1 22 4 discriminator 1
+	cmp	DWORD PTR -8[rbp], 499	# i,
+	jle	.L15	#,
+.LBE5:
+# mpi_matrix_base.c:29:    return 1;
+	.loc 1 29 11
+	mov	eax, 1	# _11,
+.L13:
+# mpi_matrix_base.c:30: }
+	.loc 1 30 1
+	pop	rbp	#
+	.cfi_def_cfa 7, 8
+	ret	
+	.cfi_endproc
+.LFE7:
+	.size	checkRes, .-checkRes
+	.section	.rodata
+.LC1:
+	.string	"Done in %f seconds.\n"
+	.align 8
+.LC2:
+	.string	"Brute force done in %f seconds.\n"
+.LC3:
+	.string	"ERROR: mismatch!"
+.LC4:
+	.string	"Result is correct."
+	.text
+	.globl	main
+	.type	main, @function
+main:
+.LFB8:
+	.loc 1 33 1
+	.cfi_startproc
+	endbr64	
+	push	rbp	#
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	mov	rbp, rsp	#,
+	.cfi_def_cfa_register 6
+	lea	r11, -7999488[rsp]	#,
+.LPSRL0:
+	sub	rsp, 4096	#,
+	or	DWORD PTR [rsp], 0	#,
+	cmp	rsp, r11	#,
+	jne	.LPSRL0
+	sub	rsp, 720	#,
+	mov	DWORD PTR -8000196[rbp], edi	# argc, argc
+	mov	QWORD PTR -8000208[rbp], rsi	# argv, argv
+# mpi_matrix_base.c:33: {
+	.loc 1 33 1
+	mov	rax, QWORD PTR fs:40	# tmp344, MEM[(<address-space-1> long unsigned int *)40B]
+	mov	QWORD PTR -8[rbp], rax	# D.11035, tmp344
+	xor	eax, eax	# tmp344
+# mpi_matrix_base.c:41:    MPI_Init(&argc, &argv);
+	.loc 1 41 4
+	lea	rdx, -8000208[rbp]	# tmp184,
+	lea	rax, -8000196[rbp]	# tmp185,
+	mov	rsi, rdx	#, tmp184
+	mov	rdi, rax	#, tmp185
+	call	MPI_Init@PLT	#
+# mpi_matrix_base.c:42:    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	.loc 1 42 4
+	lea	rax, -8000180[rbp]	# tmp186,
+	mov	rsi, rax	#, tmp186
+	mov	edi, 1140850688	#,
+	call	MPI_Comm_rank@PLT	#
+# mpi_matrix_base.c:43:    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+	.loc 1 43 4
+	lea	rax, -8000176[rbp]	# tmp187,
+	mov	rsi, rax	#, tmp187
+	mov	edi, 1140850688	#,
+	call	MPI_Comm_size@PLT	#
+# mpi_matrix_base.c:45:    int *sendcounts = malloc(mpiSize * sizeof(int));
+	.loc 1 45 22
+	mov	eax, DWORD PTR -8000176[rbp]	# mpiSize.0_1, mpiSize
+	cdqe
+	sal	rax, 2	# _3,
+	mov	rdi, rax	#, _3
+	call	malloc@PLT	#
+	mov	QWORD PTR -8000096[rbp], rax	# sendcounts, tmp188
+# mpi_matrix_base.c:46:    int *displs     = malloc(mpiSize * sizeof(int));
+	.loc 1 46 22
+	mov	eax, DWORD PTR -8000176[rbp]	# mpiSize.1_4, mpiSize
+	cdqe
+	sal	rax, 2	# _6,
+	mov	rdi, rax	#, _6
+	call	malloc@PLT	#
+	mov	QWORD PTR -8000088[rbp], rax	# displs, tmp189
+# mpi_matrix_base.c:48:    int myrows = 0; // rows of matrix A assigned to each process
+	.loc 1 48 8
+	mov	DWORD PTR -8000124[rbp], 0	# myrows,
+# mpi_matrix_base.c:51:    if (rank == 0) {
+	.loc 1 51 13
+	mov	eax, DWORD PTR -8000180[rbp]	# rank.2_7, rank
+# mpi_matrix_base.c:51:    if (rank == 0) {
+	.loc 1 51 7
+	test	eax, eax	# rank.2_7
+	jne	.L19	#,
+.LBB7:
+.LBB8:
+# mpi_matrix_base.c:53:       for (int i = 0; i < MAT_SIZE; i++) {
+	.loc 1 53 16
+	mov	DWORD PTR -8000172[rbp], 0	# i,
+# mpi_matrix_base.c:53:       for (int i = 0; i < MAT_SIZE; i++) {
+	.loc 1 53 7
+	jmp	.L20	#
+.L23:
+.LBB9:
+# mpi_matrix_base.c:54:          for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 54 19
+	mov	DWORD PTR -8000168[rbp], 0	# j,
+# mpi_matrix_base.c:54:          for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 54 10
+	jmp	.L21	#
+.L22:
+# mpi_matrix_base.c:55:                 a[i][j] = i + j;
+	.loc 1 55 29 discriminator 3
+	mov	edx, DWORD PTR -8000172[rbp]	# tmp190, i
+	mov	eax, DWORD PTR -8000168[rbp]	# tmp191, j
+	add	eax, edx	# _8, tmp190
+# mpi_matrix_base.c:55:                 a[i][j] = i + j;
+	.loc 1 55 25 discriminator 3
+	cvtsi2sd	xmm0, eax	# _9, _8
+	mov	eax, DWORD PTR -8000168[rbp]	# tmp193, j
+	cdqe
+	mov	edx, DWORD PTR -8000172[rbp]	# tmp195, i
+	movsx	rdx, edx	# tmp194, tmp195
+	imul	rdx, rdx, 500	# tmp196, tmp194,
+	add	rax, rdx	# tmp197, tmp196
+	movsd	QWORD PTR -8000016[rbp+rax*8], xmm0	# a, _9
+# mpi_matrix_base.c:56:                 b[i][j] = i * j;
+	.loc 1 56 29 discriminator 3
+	mov	eax, DWORD PTR -8000172[rbp]	# tmp198, i
+	imul	eax, DWORD PTR -8000168[rbp]	# _10, j
+# mpi_matrix_base.c:56:                 b[i][j] = i * j;
+	.loc 1 56 25 discriminator 3
+	cvtsi2sd	xmm0, eax	# _11, _10
+	mov	eax, DWORD PTR -8000168[rbp]	# tmp200, j
+	cdqe
+	mov	edx, DWORD PTR -8000172[rbp]	# tmp202, i
+	movsx	rdx, edx	# tmp201, tmp202
+	imul	rdx, rdx, 500	# tmp203, tmp201,
+	add	rax, rdx	# tmp204, tmp203
+	movsd	QWORD PTR -6000016[rbp+rax*8], xmm0	# b, _11
+# mpi_matrix_base.c:57:                 c[i][j] = 0.0;
+	.loc 1 57 25 discriminator 3
+	mov	eax, DWORD PTR -8000168[rbp]	# tmp206, j
+	cdqe
+	mov	edx, DWORD PTR -8000172[rbp]	# tmp208, i
+	movsx	rdx, edx	# tmp207, tmp208
+	imul	rdx, rdx, 500	# tmp209, tmp207,
+	add	rax, rdx	# tmp210, tmp209
+	pxor	xmm0, xmm0	# tmp211
+	movsd	QWORD PTR -4000016[rbp+rax*8], xmm0	# c, tmp211
+# mpi_matrix_base.c:54:          for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 54 41 discriminator 3
+	add	DWORD PTR -8000168[rbp], 1	# j,
+.L21:
+# mpi_matrix_base.c:54:          for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 54 10 discriminator 1
+	cmp	DWORD PTR -8000168[rbp], 499	# j,
+	jle	.L22	#,
+.LBE9:
+# mpi_matrix_base.c:53:       for (int i = 0; i < MAT_SIZE; i++) {
+	.loc 1 53 38 discriminator 2
+	add	DWORD PTR -8000172[rbp], 1	# i,
+.L20:
+# mpi_matrix_base.c:53:       for (int i = 0; i < MAT_SIZE; i++) {
+	.loc 1 53 7 discriminator 1
+	cmp	DWORD PTR -8000172[rbp], 499	# i,
+	jle	.L23	#,
+.LBE8:
+# mpi_matrix_base.c:61:       double start = MPI_Wtime();
+	.loc 1 61 22
+	call	MPI_Wtime@PLT	#
+	movq	rax, xmm0	# tmp212,
+	mov	QWORD PTR -8000056[rbp], rax	# start, tmp212
+# mpi_matrix_base.c:64:       MPI_Bcast(&b[0][0], MAT_SIZE*MAT_SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	.loc 1 64 7
+	lea	rax, -6000016[rbp]	# tmp213,
+	mov	r8d, 1140850688	#,
+	mov	ecx, 0	#,
+	mov	edx, 1275070475	#,
+	mov	esi, 250000	#,
+	mov	rdi, rax	#, tmp213
+	call	MPI_Bcast@PLT	#
+# mpi_matrix_base.c:67:       int rows_per_proc = MAT_SIZE / mpiSize;
+	.loc 1 67 36
+	mov	ecx, DWORD PTR -8000176[rbp]	# mpiSize.3_12, mpiSize
+# mpi_matrix_base.c:67:       int rows_per_proc = MAT_SIZE / mpiSize;
+	.loc 1 67 11
+	mov	eax, 500	# tmp216,
+	cdq
+	idiv	ecx	# mpiSize.3_12
+	mov	DWORD PTR -8000108[rbp], eax	# rows_per_proc, tmp214
+# mpi_matrix_base.c:68:       int rem = MAT_SIZE % mpiSize;
+	.loc 1 68 26
+	mov	ecx, DWORD PTR -8000176[rbp]	# mpiSize.4_13, mpiSize
+# mpi_matrix_base.c:68:       int rem = MAT_SIZE % mpiSize;
+	.loc 1 68 11
+	mov	eax, 500	# tmp217,
+	cdq
+	idiv	ecx	# mpiSize.4_13
+	mov	DWORD PTR -8000104[rbp], edx	# rem, tmp218
+# mpi_matrix_base.c:69:       int offset = 0;
+	.loc 1 69 11
+	mov	DWORD PTR -8000164[rbp], 0	# offset,
+.LBB10:
+# mpi_matrix_base.c:70:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 70 16
+	mov	DWORD PTR -8000160[rbp], 0	# p,
+# mpi_matrix_base.c:70:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 70 7
+	jmp	.L24	#
+.L25:
+.LBB11:
+# mpi_matrix_base.c:71:          int rows = rows_per_proc + (p < rem ? 1 : 0);
+	.loc 1 71 50 discriminator 3
+	mov	eax, DWORD PTR -8000160[rbp]	# tmp220, p
+	cmp	eax, DWORD PTR -8000104[rbp]	# tmp220, rem
+	setl	al	#, _14
+	movzx	edx, al	# _15, _14
+# mpi_matrix_base.c:71:          int rows = rows_per_proc + (p < rem ? 1 : 0);
+	.loc 1 71 14 discriminator 3
+	mov	eax, DWORD PTR -8000108[rbp]	# tmp224, rows_per_proc
+	add	eax, edx	# tmp223, _15
+	mov	DWORD PTR -8000100[rbp], eax	# rows, tmp223
+# mpi_matrix_base.c:72:          sendcounts[p] = rows * MAT_SIZE;     // number of elements
+	.loc 1 72 20 discriminator 3
+	mov	eax, DWORD PTR -8000160[rbp]	# tmp225, p
+	cdqe
+	lea	rdx, 0[0+rax*4]	# _17,
+	mov	rax, QWORD PTR -8000096[rbp]	# tmp226, sendcounts
+	add	rdx, rax	# _18, tmp226
+# mpi_matrix_base.c:72:          sendcounts[p] = rows * MAT_SIZE;     // number of elements
+	.loc 1 72 31 discriminator 3
+	mov	eax, DWORD PTR -8000100[rbp]	# tmp227, rows
+	imul	eax, eax, 500	# _19, tmp227,
+# mpi_matrix_base.c:72:          sendcounts[p] = rows * MAT_SIZE;     // number of elements
+	.loc 1 72 24 discriminator 3
+	mov	DWORD PTR [rdx], eax	# *_18, _19
+# mpi_matrix_base.c:73:          displs[p]     = offset * MAT_SIZE;   // displacement (in elements)
+	.loc 1 73 16 discriminator 3
+	mov	eax, DWORD PTR -8000160[rbp]	# tmp228, p
+	cdqe
+	lea	rdx, 0[0+rax*4]	# _21,
+	mov	rax, QWORD PTR -8000088[rbp]	# tmp229, displs
+	add	rdx, rax	# _22, tmp229
+# mpi_matrix_base.c:73:          displs[p]     = offset * MAT_SIZE;   // displacement (in elements)
+	.loc 1 73 33 discriminator 3
+	mov	eax, DWORD PTR -8000164[rbp]	# tmp230, offset
+	imul	eax, eax, 500	# _23, tmp230,
+# mpi_matrix_base.c:73:          displs[p]     = offset * MAT_SIZE;   // displacement (in elements)
+	.loc 1 73 24 discriminator 3
+	mov	DWORD PTR [rdx], eax	# *_22, _23
+# mpi_matrix_base.c:74:          offset += rows;
+	.loc 1 74 17 discriminator 3
+	mov	eax, DWORD PTR -8000100[rbp]	# tmp231, rows
+	add	DWORD PTR -8000164[rbp], eax	# offset, tmp231
+.LBE11:
+# mpi_matrix_base.c:70:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 70 37 discriminator 3
+	add	DWORD PTR -8000160[rbp], 1	# p,
+.L24:
+# mpi_matrix_base.c:70:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 70 25 discriminator 1
+	mov	eax, DWORD PTR -8000176[rbp]	# mpiSize.5_24, mpiSize
+# mpi_matrix_base.c:70:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 70 7 discriminator 1
+	cmp	DWORD PTR -8000160[rbp], eax	# p, mpiSize.5_24
+	jl	.L25	#,
+.LBE10:
+# mpi_matrix_base.c:76:       myrows = sendcounts[rank] / MAT_SIZE;
+	.loc 1 76 26
+	mov	eax, DWORD PTR -8000180[rbp]	# rank.6_25, rank
+	cdqe
+	lea	rdx, 0[0+rax*4]	# _27,
+	mov	rax, QWORD PTR -8000096[rbp]	# tmp232, sendcounts
+	add	rax, rdx	# _28, _27
+	mov	eax, DWORD PTR [rax]	# _29, *_28
+# mpi_matrix_base.c:76:       myrows = sendcounts[rank] / MAT_SIZE;
+	.loc 1 76 14
+	movsx	rdx, eax	# tmp233, _29
+	imul	rdx, rdx, 274877907	# tmp234, tmp233,
+	shr	rdx, 32	# tmp235,
+	sar	edx, 5	# tmp236,
+	sar	eax, 31	# tmp237,
+	sub	edx, eax	# tmp236, tmp237
+	mov	eax, edx	# tmp238, tmp236
+	mov	DWORD PTR -8000124[rbp], eax	# myrows, tmp238
+# mpi_matrix_base.c:79:       double *A_local = malloc((size_t)myrows * MAT_SIZE * sizeof(double));
+	.loc 1 79 32
+	mov	eax, DWORD PTR -8000124[rbp]	# tmp239, myrows
+	cdqe
+# mpi_matrix_base.c:79:       double *A_local = malloc((size_t)myrows * MAT_SIZE * sizeof(double));
+	.loc 1 79 25
+	imul	rax, rax, 4000	# _31, _30,
+	mov	rdi, rax	#, _31
+	call	malloc@PLT	#
+	mov	QWORD PTR -8000048[rbp], rax	# A_local, tmp240
+# mpi_matrix_base.c:80:       double *C_local = calloc((size_t)myrows * MAT_SIZE, sizeof(double));
+	.loc 1 80 32
+	mov	eax, DWORD PTR -8000124[rbp]	# tmp241, myrows
+	cdqe
+# mpi_matrix_base.c:80:       double *C_local = calloc((size_t)myrows * MAT_SIZE, sizeof(double));
+	.loc 1 80 25
+	imul	rax, rax, 500	# _33, _32,
+	mov	esi, 8	#,
+	mov	rdi, rax	#, _33
+	call	calloc@PLT	#
+	mov	QWORD PTR -8000040[rbp], rax	# C_local, tmp242
+# mpi_matrix_base.c:83:       MPI_Scatterv(&a[0][0], sendcounts, displs, MPI_DOUBLE,
+	.loc 1 83 7
+	mov	eax, DWORD PTR -8000124[rbp]	# tmp243, myrows
+	imul	edi, eax, 500	# _34, tmp243,
+	mov	rcx, QWORD PTR -8000048[rbp]	# tmp244, A_local
+	mov	rdx, QWORD PTR -8000088[rbp]	# tmp245, displs
+	mov	rsi, QWORD PTR -8000096[rbp]	# tmp246, sendcounts
+	lea	rax, -8000016[rbp]	# tmp247,
+	sub	rsp, 8	#,
+	push	1140850688	#
+	push	0	#
+	push	1275070475	#
+	mov	r9d, edi	#, _34
+	mov	r8, rcx	#, tmp244
+	mov	ecx, 1275070475	#,
+	mov	rdi, rax	#, tmp247
+	call	MPI_Scatterv@PLT	#
+	add	rsp, 32	#,
+.LBB12:
+# mpi_matrix_base.c:88:       for (int i = 0; i < myrows; i++) {
+	.loc 1 88 16
+	mov	DWORD PTR -8000156[rbp], 0	# i,
+# mpi_matrix_base.c:88:       for (int i = 0; i < myrows; i++) {
+	.loc 1 88 7
+	jmp	.L26	#
+.L31:
+.LBB13:
+# mpi_matrix_base.c:89:          for (int k = 0; k < MAT_SIZE; k++) {
+	.loc 1 89 19
+	mov	DWORD PTR -8000152[rbp], 0	# k,
+# mpi_matrix_base.c:89:          for (int k = 0; k < MAT_SIZE; k++) {
+	.loc 1 89 10
+	jmp	.L27	#
+.L30:
+.LBB14:
+# mpi_matrix_base.c:90:                double a_k = A_local[i*MAT_SIZE + k];
+	.loc 1 90 38
+	mov	eax, DWORD PTR -8000156[rbp]	# tmp248, i
+	imul	edx, eax, 500	# _35, tmp248,
+# mpi_matrix_base.c:90:                double a_k = A_local[i*MAT_SIZE + k];
+	.loc 1 90 48
+	mov	eax, DWORD PTR -8000152[rbp]	# tmp249, k
+	add	eax, edx	# _36, _35
+	cdqe
+# mpi_matrix_base.c:90:                double a_k = A_local[i*MAT_SIZE + k];
+	.loc 1 90 36
+	lea	rdx, 0[0+rax*8]	# _38,
+	mov	rax, QWORD PTR -8000048[rbp]	# tmp250, A_local
+	add	rax, rdx	# _39, _38
+# mpi_matrix_base.c:90:                double a_k = A_local[i*MAT_SIZE + k];
+	.loc 1 90 23
+	movsd	xmm0, QWORD PTR [rax]	# tmp251, *_39
+	movsd	QWORD PTR -8000024[rbp], xmm0	# a_k, tmp251
+.LBB15:
+# mpi_matrix_base.c:91:                for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 91 25
+	mov	DWORD PTR -8000148[rbp], 0	# j,
+# mpi_matrix_base.c:91:                for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 91 16
+	jmp	.L28	#
+.L29:
+# mpi_matrix_base.c:92:                   C_local[i*MAT_SIZE + j] += a_k * b[k][j];
+	.loc 1 92 43 discriminator 3
+	mov	eax, DWORD PTR -8000156[rbp]	# tmp252, i
+	imul	edx, eax, 500	# _40, tmp252,
+	mov	eax, DWORD PTR -8000148[rbp]	# tmp253, j
+	add	eax, edx	# _41, _40
+	cdqe
+	lea	rdx, 0[0+rax*8]	# _43,
+	mov	rax, QWORD PTR -8000040[rbp]	# tmp254, C_local
+	add	rax, rdx	# _44, _43
+	movsd	xmm1, QWORD PTR [rax]	# _45, *_44
+# mpi_matrix_base.c:92:                   C_local[i*MAT_SIZE + j] += a_k * b[k][j];
+	.loc 1 92 56 discriminator 3
+	mov	eax, DWORD PTR -8000148[rbp]	# tmp256, j
+	cdqe
+	mov	edx, DWORD PTR -8000152[rbp]	# tmp258, k
+	movsx	rdx, edx	# tmp257, tmp258
+	imul	rdx, rdx, 500	# tmp259, tmp257,
+	add	rax, rdx	# tmp260, tmp259
+	movsd	xmm0, QWORD PTR -6000016[rbp+rax*8]	# _46, b
+# mpi_matrix_base.c:92:                   C_local[i*MAT_SIZE + j] += a_k * b[k][j];
+	.loc 1 92 50 discriminator 3
+	mulsd	xmm0, QWORD PTR -8000024[rbp]	# _47, a_k
+# mpi_matrix_base.c:92:                   C_local[i*MAT_SIZE + j] += a_k * b[k][j];
+	.loc 1 92 43 discriminator 3
+	mov	eax, DWORD PTR -8000156[rbp]	# tmp261, i
+	imul	edx, eax, 500	# _48, tmp261,
+	mov	eax, DWORD PTR -8000148[rbp]	# tmp262, j
+	add	eax, edx	# _49, _48
+	cdqe
+	lea	rdx, 0[0+rax*8]	# _51,
+	mov	rax, QWORD PTR -8000040[rbp]	# tmp263, C_local
+	add	rax, rdx	# _52, _51
+	addsd	xmm0, xmm1	# _53, _45
+	movsd	QWORD PTR [rax], xmm0	# *_52, _53
+# mpi_matrix_base.c:91:                for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 91 47 discriminator 3
+	add	DWORD PTR -8000148[rbp], 1	# j,
+.L28:
+# mpi_matrix_base.c:91:                for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 91 16 discriminator 1
+	cmp	DWORD PTR -8000148[rbp], 499	# j,
+	jle	.L29	#,
+.LBE15:
+.LBE14:
+# mpi_matrix_base.c:89:          for (int k = 0; k < MAT_SIZE; k++) {
+	.loc 1 89 41 discriminator 2
+	add	DWORD PTR -8000152[rbp], 1	# k,
+.L27:
+# mpi_matrix_base.c:89:          for (int k = 0; k < MAT_SIZE; k++) {
+	.loc 1 89 10 discriminator 1
+	cmp	DWORD PTR -8000152[rbp], 499	# k,
+	jle	.L30	#,
+.LBE13:
+# mpi_matrix_base.c:88:       for (int i = 0; i < myrows; i++) {
+	.loc 1 88 36 discriminator 2
+	add	DWORD PTR -8000156[rbp], 1	# i,
+.L26:
+# mpi_matrix_base.c:88:       for (int i = 0; i < myrows; i++) {
+	.loc 1 88 7 discriminator 1
+	mov	eax, DWORD PTR -8000156[rbp]	# tmp264, i
+	cmp	eax, DWORD PTR -8000124[rbp]	# tmp264, myrows
+	jl	.L31	#,
+.LBE12:
+# mpi_matrix_base.c:97:       MPI_Barrier(MPI_COMM_WORLD);
+	.loc 1 97 7
+	mov	edi, 1140850688	#,
+	call	MPI_Barrier@PLT	#
+# mpi_matrix_base.c:100:       MPI_Gatherv(C_local, myrows*MAT_SIZE, MPI_DOUBLE,
+	.loc 1 100 7
+	mov	eax, DWORD PTR -8000124[rbp]	# tmp265, myrows
+	imul	esi, eax, 500	# _54, tmp265,
+	mov	rdi, QWORD PTR -8000088[rbp]	# tmp266, displs
+	mov	rcx, QWORD PTR -8000096[rbp]	# tmp267, sendcounts
+	lea	rdx, -4000016[rbp]	# tmp268,
+	mov	rax, QWORD PTR -8000040[rbp]	# tmp269, C_local
+	sub	rsp, 8	#,
+	push	1140850688	#
+	push	0	#
+	push	1275070475	#
+	mov	r9, rdi	#, tmp266
+	mov	r8, rcx	#, tmp267
+	mov	rcx, rdx	#, tmp268
+	mov	edx, 1275070475	#,
+	mov	rdi, rax	#, tmp269
+	call	MPI_Gatherv@PLT	#
+	add	rsp, 32	#,
+# mpi_matrix_base.c:104:       free(A_local);
+	.loc 1 104 7
+	mov	rax, QWORD PTR -8000048[rbp]	# tmp270, A_local
+	mov	rdi, rax	#, tmp270
+	call	free@PLT	#
+# mpi_matrix_base.c:105:       free(C_local);
+	.loc 1 105 7
+	mov	rax, QWORD PTR -8000040[rbp]	# tmp271, C_local
+	mov	rdi, rax	#, tmp271
+	call	free@PLT	#
+# mpi_matrix_base.c:107:       MPI_Barrier(MPI_COMM_WORLD);
+	.loc 1 107 7
+	mov	edi, 1140850688	#,
+	call	MPI_Barrier@PLT	#
+# mpi_matrix_base.c:110:       double finish = MPI_Wtime();
+	.loc 1 110 23
+	call	MPI_Wtime@PLT	#
+	movq	rax, xmm0	# tmp272,
+	mov	QWORD PTR -8000032[rbp], rax	# finish, tmp272
+# mpi_matrix_base.c:112:       printf("Done in %f seconds.\n", finish - start);
+	.loc 1 112 7
+	movsd	xmm0, QWORD PTR -8000032[rbp]	# tmp273, finish
+	subsd	xmm0, QWORD PTR -8000056[rbp]	# _55, start
+	lea	rdi, .LC1[rip]	#,
+	mov	eax, 1	#,
+	call	printf@PLT	#
+# mpi_matrix_base.c:115:       start = MPI_Wtime();
+	.loc 1 115 15
+	call	MPI_Wtime@PLT	#
+	movq	rax, xmm0	# tmp274,
+	mov	QWORD PTR -8000056[rbp], rax	# start, tmp274
+# mpi_matrix_base.c:117:       brute_force_matmul(a, b, bfRes);
+	.loc 1 117 7
+	lea	rdx, -2000016[rbp]	# tmp275,
+	lea	rcx, -6000016[rbp]	# tmp276,
+	lea	rax, -8000016[rbp]	# tmp277,
+	mov	rsi, rcx	#, tmp276
+	mov	rdi, rax	#, tmp277
+	call	brute_force_matmul	#
+# mpi_matrix_base.c:119:       finish = MPI_Wtime();
+	.loc 1 119 16
+	call	MPI_Wtime@PLT	#
+	movq	rax, xmm0	# tmp278,
+	mov	QWORD PTR -8000032[rbp], rax	# finish, tmp278
+# mpi_matrix_base.c:120:       printf("Brute force done in %f seconds.\n", finish - start);
+	.loc 1 120 7
+	movsd	xmm0, QWORD PTR -8000032[rbp]	# tmp279, finish
+	subsd	xmm0, QWORD PTR -8000056[rbp]	# _56, start
+	lea	rdi, .LC2[rip]	#,
+	mov	eax, 1	#,
+	call	printf@PLT	#
+# mpi_matrix_base.c:122:       if (!checkRes(bfRes, c)) {
+	.loc 1 122 12
+	lea	rdx, -4000016[rbp]	# tmp280,
+	lea	rax, -2000016[rbp]	# tmp281,
+	mov	rsi, rdx	#, tmp280
+	mov	rdi, rax	#, tmp281
+	call	checkRes	#
+# mpi_matrix_base.c:122:       if (!checkRes(bfRes, c)) {
+	.loc 1 122 10
+	test	eax, eax	# _57
+	jne	.L32	#,
+# mpi_matrix_base.c:123:          printf("ERROR: mismatch!\n");
+	.loc 1 123 10
+	lea	rdi, .LC3[rip]	#,
+	call	puts@PLT	#
+	jmp	.L33	#
+.L32:
+# mpi_matrix_base.c:125:          printf("Result is correct.\n");
+	.loc 1 125 10
+	lea	rdi, .LC4[rip]	#,
+	call	puts@PLT	#
+	jmp	.L33	#
+.L19:
+.LBE7:
+.LBB16:
+# mpi_matrix_base.c:131:       MPI_Bcast(&b[0][0], MAT_SIZE*MAT_SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	.loc 1 131 7
+	lea	rax, -6000016[rbp]	# tmp282,
+	mov	r8d, 1140850688	#,
+	mov	ecx, 0	#,
+	mov	edx, 1275070475	#,
+	mov	esi, 250000	#,
+	mov	rdi, rax	#, tmp282
+	call	MPI_Bcast@PLT	#
+# mpi_matrix_base.c:133:       int rows_per_proc = MAT_SIZE / mpiSize;
+	.loc 1 133 36
+	mov	esi, DWORD PTR -8000176[rbp]	# mpiSize.7_58, mpiSize
+# mpi_matrix_base.c:133:       int rows_per_proc = MAT_SIZE / mpiSize;
+	.loc 1 133 11
+	mov	eax, 500	# tmp285,
+	cdq
+	idiv	esi	# mpiSize.7_58
+	mov	DWORD PTR -8000120[rbp], eax	# rows_per_proc, tmp283
+# mpi_matrix_base.c:134:       int rem = MAT_SIZE % mpiSize;
+	.loc 1 134 26
+	mov	ecx, DWORD PTR -8000176[rbp]	# mpiSize.8_59, mpiSize
+# mpi_matrix_base.c:134:       int rem = MAT_SIZE % mpiSize;
+	.loc 1 134 11
+	mov	eax, 500	# tmp286,
+	cdq
+	idiv	ecx	# mpiSize.8_59
+	mov	DWORD PTR -8000116[rbp], edx	# rem, tmp287
+# mpi_matrix_base.c:135:       int offset = 0;
+	.loc 1 135 11
+	mov	DWORD PTR -8000144[rbp], 0	# offset,
+.LBB17:
+# mpi_matrix_base.c:136:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 136 16
+	mov	DWORD PTR -8000140[rbp], 0	# p,
+# mpi_matrix_base.c:136:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 136 7
+	jmp	.L34	#
+.L35:
+.LBB18:
+# mpi_matrix_base.c:137:          int rows = rows_per_proc + (p < rem ? 1 : 0);
+	.loc 1 137 50 discriminator 3
+	mov	eax, DWORD PTR -8000140[rbp]	# tmp289, p
+	cmp	eax, DWORD PTR -8000116[rbp]	# tmp289, rem
+	setl	al	#, _60
+	movzx	edx, al	# _61, _60
+# mpi_matrix_base.c:137:          int rows = rows_per_proc + (p < rem ? 1 : 0);
+	.loc 1 137 14 discriminator 3
+	mov	eax, DWORD PTR -8000120[rbp]	# tmp293, rows_per_proc
+	add	eax, edx	# tmp292, _61
+	mov	DWORD PTR -8000112[rbp], eax	# rows, tmp292
+# mpi_matrix_base.c:138:          sendcounts[p] = rows * MAT_SIZE;     // number of elements
+	.loc 1 138 20 discriminator 3
+	mov	eax, DWORD PTR -8000140[rbp]	# tmp294, p
+	cdqe
+	lea	rdx, 0[0+rax*4]	# _63,
+	mov	rax, QWORD PTR -8000096[rbp]	# tmp295, sendcounts
+	add	rdx, rax	# _64, tmp295
+# mpi_matrix_base.c:138:          sendcounts[p] = rows * MAT_SIZE;     // number of elements
+	.loc 1 138 31 discriminator 3
+	mov	eax, DWORD PTR -8000112[rbp]	# tmp296, rows
+	imul	eax, eax, 500	# _65, tmp296,
+# mpi_matrix_base.c:138:          sendcounts[p] = rows * MAT_SIZE;     // number of elements
+	.loc 1 138 24 discriminator 3
+	mov	DWORD PTR [rdx], eax	# *_64, _65
+# mpi_matrix_base.c:139:          displs[p]     = offset * MAT_SIZE;   // displacement (in elements)
+	.loc 1 139 16 discriminator 3
+	mov	eax, DWORD PTR -8000140[rbp]	# tmp297, p
+	cdqe
+	lea	rdx, 0[0+rax*4]	# _67,
+	mov	rax, QWORD PTR -8000088[rbp]	# tmp298, displs
+	add	rdx, rax	# _68, tmp298
+# mpi_matrix_base.c:139:          displs[p]     = offset * MAT_SIZE;   // displacement (in elements)
+	.loc 1 139 33 discriminator 3
+	mov	eax, DWORD PTR -8000144[rbp]	# tmp299, offset
+	imul	eax, eax, 500	# _69, tmp299,
+# mpi_matrix_base.c:139:          displs[p]     = offset * MAT_SIZE;   // displacement (in elements)
+	.loc 1 139 24 discriminator 3
+	mov	DWORD PTR [rdx], eax	# *_68, _69
+# mpi_matrix_base.c:140:          offset += rows;
+	.loc 1 140 17 discriminator 3
+	mov	eax, DWORD PTR -8000112[rbp]	# tmp300, rows
+	add	DWORD PTR -8000144[rbp], eax	# offset, tmp300
+.LBE18:
+# mpi_matrix_base.c:136:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 136 37 discriminator 3
+	add	DWORD PTR -8000140[rbp], 1	# p,
+.L34:
+# mpi_matrix_base.c:136:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 136 25 discriminator 1
+	mov	eax, DWORD PTR -8000176[rbp]	# mpiSize.9_70, mpiSize
+# mpi_matrix_base.c:136:       for (int p = 0; p < mpiSize; p++) {
+	.loc 1 136 7 discriminator 1
+	cmp	DWORD PTR -8000140[rbp], eax	# p, mpiSize.9_70
+	jl	.L35	#,
+.LBE17:
+# mpi_matrix_base.c:142:       myrows = sendcounts[rank] / MAT_SIZE;
+	.loc 1 142 26
+	mov	eax, DWORD PTR -8000180[rbp]	# rank.10_71, rank
+	cdqe
+	lea	rdx, 0[0+rax*4]	# _73,
+	mov	rax, QWORD PTR -8000096[rbp]	# tmp301, sendcounts
+	add	rax, rdx	# _74, _73
+	mov	eax, DWORD PTR [rax]	# _75, *_74
+# mpi_matrix_base.c:142:       myrows = sendcounts[rank] / MAT_SIZE;
+	.loc 1 142 14
+	movsx	rdx, eax	# tmp302, _75
+	imul	rdx, rdx, 274877907	# tmp303, tmp302,
+	shr	rdx, 32	# tmp304,
+	sar	edx, 5	# tmp305,
+	sar	eax, 31	# tmp306,
+	sub	edx, eax	# tmp305, tmp306
+	mov	eax, edx	# tmp307, tmp305
+	mov	DWORD PTR -8000124[rbp], eax	# myrows, tmp307
+# mpi_matrix_base.c:145:       double *A_local = malloc((size_t)myrows * MAT_SIZE * sizeof(double));
+	.loc 1 145 32
+	mov	eax, DWORD PTR -8000124[rbp]	# tmp308, myrows
+	cdqe
+# mpi_matrix_base.c:145:       double *A_local = malloc((size_t)myrows * MAT_SIZE * sizeof(double));
+	.loc 1 145 25
+	imul	rax, rax, 4000	# _77, _76,
+	mov	rdi, rax	#, _77
+	call	malloc@PLT	#
+	mov	QWORD PTR -8000080[rbp], rax	# A_local, tmp309
+# mpi_matrix_base.c:146:       double *C_local = calloc((size_t)myrows * MAT_SIZE, sizeof(double));
+	.loc 1 146 32
+	mov	eax, DWORD PTR -8000124[rbp]	# tmp310, myrows
+	cdqe
+# mpi_matrix_base.c:146:       double *C_local = calloc((size_t)myrows * MAT_SIZE, sizeof(double));
+	.loc 1 146 25
+	imul	rax, rax, 500	# _79, _78,
+	mov	esi, 8	#,
+	mov	rdi, rax	#, _79
+	call	calloc@PLT	#
+	mov	QWORD PTR -8000072[rbp], rax	# C_local, tmp311
+# mpi_matrix_base.c:149:       MPI_Scatterv(&a[0][0], sendcounts, displs, MPI_DOUBLE,
+	.loc 1 149 7
+	mov	eax, DWORD PTR -8000124[rbp]	# tmp312, myrows
+	imul	edi, eax, 500	# _80, tmp312,
+	mov	rcx, QWORD PTR -8000080[rbp]	# tmp313, A_local
+	mov	rdx, QWORD PTR -8000088[rbp]	# tmp314, displs
+	mov	rsi, QWORD PTR -8000096[rbp]	# tmp315, sendcounts
+	lea	rax, -8000016[rbp]	# tmp316,
+	sub	rsp, 8	#,
+	push	1140850688	#
+	push	0	#
+	push	1275070475	#
+	mov	r9d, edi	#, _80
+	mov	r8, rcx	#, tmp313
+	mov	ecx, 1275070475	#,
+	mov	rdi, rax	#, tmp316
+	call	MPI_Scatterv@PLT	#
+	add	rsp, 32	#,
+.LBB19:
+# mpi_matrix_base.c:154:       for (int i = 0; i < myrows; i++) {
+	.loc 1 154 16
+	mov	DWORD PTR -8000136[rbp], 0	# i,
+# mpi_matrix_base.c:154:       for (int i = 0; i < myrows; i++) {
+	.loc 1 154 7
+	jmp	.L36	#
+.L41:
+.LBB20:
+# mpi_matrix_base.c:155:          for (int k = 0; k < MAT_SIZE; k++) {
+	.loc 1 155 19
+	mov	DWORD PTR -8000132[rbp], 0	# k,
+# mpi_matrix_base.c:155:          for (int k = 0; k < MAT_SIZE; k++) {
+	.loc 1 155 10
+	jmp	.L37	#
+.L40:
+.LBB21:
+# mpi_matrix_base.c:156:             double aik = A_local[i*MAT_SIZE + k];
+	.loc 1 156 35
+	mov	eax, DWORD PTR -8000136[rbp]	# tmp317, i
+	imul	edx, eax, 500	# _81, tmp317,
+# mpi_matrix_base.c:156:             double aik = A_local[i*MAT_SIZE + k];
+	.loc 1 156 45
+	mov	eax, DWORD PTR -8000132[rbp]	# tmp318, k
+	add	eax, edx	# _82, _81
+	cdqe
+# mpi_matrix_base.c:156:             double aik = A_local[i*MAT_SIZE + k];
+	.loc 1 156 33
+	lea	rdx, 0[0+rax*8]	# _84,
+	mov	rax, QWORD PTR -8000080[rbp]	# tmp319, A_local
+	add	rax, rdx	# _85, _84
+# mpi_matrix_base.c:156:             double aik = A_local[i*MAT_SIZE + k];
+	.loc 1 156 20
+	movsd	xmm0, QWORD PTR [rax]	# tmp320, *_85
+	movsd	QWORD PTR -8000064[rbp], xmm0	# aik, tmp320
+.LBB22:
+# mpi_matrix_base.c:157:             for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 157 22
+	mov	DWORD PTR -8000128[rbp], 0	# j,
+# mpi_matrix_base.c:157:             for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 157 13
+	jmp	.L38	#
+.L39:
+# mpi_matrix_base.c:158:                C_local[i*MAT_SIZE + j] += aik * b[k][j];
+	.loc 1 158 40 discriminator 3
+	mov	eax, DWORD PTR -8000136[rbp]	# tmp321, i
+	imul	edx, eax, 500	# _86, tmp321,
+	mov	eax, DWORD PTR -8000128[rbp]	# tmp322, j
+	add	eax, edx	# _87, _86
+	cdqe
+	lea	rdx, 0[0+rax*8]	# _89,
+	mov	rax, QWORD PTR -8000072[rbp]	# tmp323, C_local
+	add	rax, rdx	# _90, _89
+	movsd	xmm1, QWORD PTR [rax]	# _91, *_90
+# mpi_matrix_base.c:158:                C_local[i*MAT_SIZE + j] += aik * b[k][j];
+	.loc 1 158 53 discriminator 3
+	mov	eax, DWORD PTR -8000128[rbp]	# tmp325, j
+	cdqe
+	mov	edx, DWORD PTR -8000132[rbp]	# tmp327, k
+	movsx	rdx, edx	# tmp326, tmp327
+	imul	rdx, rdx, 500	# tmp328, tmp326,
+	add	rax, rdx	# tmp329, tmp328
+	movsd	xmm0, QWORD PTR -6000016[rbp+rax*8]	# _92, b
+# mpi_matrix_base.c:158:                C_local[i*MAT_SIZE + j] += aik * b[k][j];
+	.loc 1 158 47 discriminator 3
+	mulsd	xmm0, QWORD PTR -8000064[rbp]	# _93, aik
+# mpi_matrix_base.c:158:                C_local[i*MAT_SIZE + j] += aik * b[k][j];
+	.loc 1 158 40 discriminator 3
+	mov	eax, DWORD PTR -8000136[rbp]	# tmp330, i
+	imul	edx, eax, 500	# _94, tmp330,
+	mov	eax, DWORD PTR -8000128[rbp]	# tmp331, j
+	add	eax, edx	# _95, _94
+	cdqe
+	lea	rdx, 0[0+rax*8]	# _97,
+	mov	rax, QWORD PTR -8000072[rbp]	# tmp332, C_local
+	add	rax, rdx	# _98, _97
+	addsd	xmm0, xmm1	# _99, _91
+	movsd	QWORD PTR [rax], xmm0	# *_98, _99
+# mpi_matrix_base.c:157:             for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 157 44 discriminator 3
+	add	DWORD PTR -8000128[rbp], 1	# j,
+.L38:
+# mpi_matrix_base.c:157:             for (int j = 0; j < MAT_SIZE; j++) {
+	.loc 1 157 13 discriminator 1
+	cmp	DWORD PTR -8000128[rbp], 499	# j,
+	jle	.L39	#,
+.LBE22:
+.LBE21:
+# mpi_matrix_base.c:155:          for (int k = 0; k < MAT_SIZE; k++) {
+	.loc 1 155 41 discriminator 2
+	add	DWORD PTR -8000132[rbp], 1	# k,
+.L37:
+# mpi_matrix_base.c:155:          for (int k = 0; k < MAT_SIZE; k++) {
+	.loc 1 155 10 discriminator 1
+	cmp	DWORD PTR -8000132[rbp], 499	# k,
+	jle	.L40	#,
+.LBE20:
+# mpi_matrix_base.c:154:       for (int i = 0; i < myrows; i++) {
+	.loc 1 154 36 discriminator 2
+	add	DWORD PTR -8000136[rbp], 1	# i,
+.L36:
+# mpi_matrix_base.c:154:       for (int i = 0; i < myrows; i++) {
+	.loc 1 154 7 discriminator 1
+	mov	eax, DWORD PTR -8000136[rbp]	# tmp333, i
+	cmp	eax, DWORD PTR -8000124[rbp]	# tmp333, myrows
+	jl	.L41	#,
+.LBE19:
+# mpi_matrix_base.c:163:       MPI_Barrier(MPI_COMM_WORLD);
+	.loc 1 163 7
+	mov	edi, 1140850688	#,
+	call	MPI_Barrier@PLT	#
+# mpi_matrix_base.c:165:       MPI_Gatherv(C_local, myrows*MAT_SIZE, MPI_DOUBLE,
+	.loc 1 165 7
+	mov	eax, DWORD PTR -8000124[rbp]	# tmp334, myrows
+	imul	esi, eax, 500	# _100, tmp334,
+	mov	rdi, QWORD PTR -8000088[rbp]	# tmp335, displs
+	mov	rcx, QWORD PTR -8000096[rbp]	# tmp336, sendcounts
+	lea	rdx, -4000016[rbp]	# tmp337,
+	mov	rax, QWORD PTR -8000072[rbp]	# tmp338, C_local
+	sub	rsp, 8	#,
+	push	1140850688	#
+	push	0	#
+	push	1275070475	#
+	mov	r9, rdi	#, tmp335
+	mov	r8, rcx	#, tmp336
+	mov	rcx, rdx	#, tmp337
+	mov	edx, 1275070475	#,
+	mov	rdi, rax	#, tmp338
+	call	MPI_Gatherv@PLT	#
+	add	rsp, 32	#,
+# mpi_matrix_base.c:169:       free(A_local);
+	.loc 1 169 7
+	mov	rax, QWORD PTR -8000080[rbp]	# tmp339, A_local
+	mov	rdi, rax	#, tmp339
+	call	free@PLT	#
+# mpi_matrix_base.c:170:       free(C_local);
+	.loc 1 170 7
+	mov	rax, QWORD PTR -8000072[rbp]	# tmp340, C_local
+	mov	rdi, rax	#, tmp340
+	call	free@PLT	#
+# mpi_matrix_base.c:172:       MPI_Barrier(MPI_COMM_WORLD);
+	.loc 1 172 7
+	mov	edi, 1140850688	#,
+	call	MPI_Barrier@PLT	#
+.L33:
+.LBE16:
+# mpi_matrix_base.c:175:    free(sendcounts);
+	.loc 1 175 4
+	mov	rax, QWORD PTR -8000096[rbp]	# tmp341, sendcounts
+	mov	rdi, rax	#, tmp341
+	call	free@PLT	#
+# mpi_matrix_base.c:176:    free(displs);
+	.loc 1 176 4
+	mov	rax, QWORD PTR -8000088[rbp]	# tmp342, displs
+	mov	rdi, rax	#, tmp342
+	call	free@PLT	#
+# mpi_matrix_base.c:179:    MPI_Finalize();
+	.loc 1 179 4
+	call	MPI_Finalize@PLT	#
+# mpi_matrix_base.c:180:    return 0;
+	.loc 1 180 11
+	mov	eax, 0	# _215,
+# mpi_matrix_base.c:181: }
+	.loc 1 181 1
+	mov	rcx, QWORD PTR -8[rbp]	# tmp345, D.11035
+	xor	rcx, QWORD PTR fs:40	# tmp345, MEM[(<address-space-1> long unsigned int *)40B]
+	je	.L43	#,
+	call	__stack_chk_fail@PLT	#
+.L43:
+	leave	
+	.cfi_def_cfa 7, 8
+	ret	
+	.cfi_endproc
+.LFE8:
+	.size	main, .-main
+.Letext0:
+	.file 2 "/usr/include/x86_64-linux-gnu/bits/types.h"
+	.file 3 "/home/haibin/intel/oneapi/mpi/2021.15/include/mpi.h"
+	.file 4 "/usr/lib/gcc/x86_64-linux-gnu/9/include/stddef.h"
+	.file 5 "/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h"
+	.file 6 "/usr/include/x86_64-linux-gnu/bits/types/FILE.h"
+	.file 7 "/usr/include/stdio.h"
+	.file 8 "/usr/include/x86_64-linux-gnu/bits/sys_errlist.h"
+	.section	.debug_info,"",@progbits
+.Ldebug_info0:
+	.long	0x990
+	.value	0x4
+	.long	.Ldebug_abbrev0
+	.byte	0x8
+	.uleb128 0x1
+	.long	.LASF93
+	.byte	0xc
+	.long	.LASF94
+	.long	.LASF95
+	.quad	.Ltext0
+	.quad	.Letext0-.Ltext0
+	.long	.Ldebug_line0
+	.uleb128 0x2
+	.byte	0x1
+	.byte	0x8
+	.long	.LASF0
+	.uleb128 0x2
+	.byte	0x2
+	.byte	0x7
+	.long	.LASF1
+	.uleb128 0x2
+	.byte	0x4
+	.byte	0x7
+	.long	.LASF2
+	.uleb128 0x2
+	.byte	0x8
+	.byte	0x7
+	.long	.LASF3
+	.uleb128 0x2
+	.byte	0x1
+	.byte	0x6
+	.long	.LASF4
+	.uleb128 0x2
+	.byte	0x2
+	.byte	0x5
+	.long	.LASF5
+	.uleb128 0x3
+	.byte	0x4
+	.byte	0x5
+	.string	"int"
+	.uleb128 0x2
+	.byte	0x8
+	.byte	0x5
+	.long	.LASF6
+	.uleb128 0x4
+	.long	.LASF7
+	.byte	0x2
+	.byte	0x98
+	.byte	0x19
+	.long	0x5e
+	.uleb128 0x4
+	.long	.LASF8
+	.byte	0x2
+	.byte	0x99
+	.byte	0x1b
+	.long	0x5e
+	.uleb128 0x5
+	.byte	0x8
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x85
+	.uleb128 0x2
+	.byte	0x1
+	.byte	0x6
+	.long	.LASF9
+	.uleb128 0x7
+	.long	0x85
+	.uleb128 0x4
+	.long	.LASF10
+	.byte	0x3
+	.byte	0xb8
+	.byte	0xd
+	.long	0x57
+	.uleb128 0x8
+	.long	.LASF11
+	.byte	0x3
+	.value	0x167
+	.byte	0xd
+	.long	0x57
+	.uleb128 0x9
+	.long	.LASF12
+	.byte	0x3
+	.value	0x1d5
+	.byte	0x22
+	.long	0xbd
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x57
+	.uleb128 0x7
+	.long	0xb7
+	.uleb128 0x9
+	.long	.LASF13
+	.byte	0x3
+	.value	0x1d6
+	.byte	0x22
+	.long	0xbd
+	.uleb128 0x8
+	.long	.LASF14
+	.byte	0x3
+	.value	0x21d
+	.byte	0xd
+	.long	0x57
+	.uleb128 0x2
+	.byte	0x8
+	.byte	0x5
+	.long	.LASF15
+	.uleb128 0x6
+	.byte	0x8
+	.long	0xee
+	.uleb128 0x7
+	.long	0xe3
+	.uleb128 0xa
+	.long	.LASF63
+	.uleb128 0x9
+	.long	.LASF16
+	.byte	0x3
+	.value	0x2d1
+	.byte	0x3a
+	.long	0xe9
+	.uleb128 0x9
+	.long	.LASF17
+	.byte	0x3
+	.value	0x357
+	.byte	0x21
+	.long	0x10d
+	.uleb128 0x6
+	.byte	0x8
+	.long	0xcf
+	.uleb128 0x9
+	.long	.LASF18
+	.byte	0x3
+	.value	0x358
+	.byte	0x21
+	.long	0x10d
+	.uleb128 0xb
+	.byte	0x14
+	.byte	0x3
+	.value	0x366
+	.byte	0x9
+	.long	0x171
+	.uleb128 0xc
+	.long	.LASF19
+	.byte	0x3
+	.value	0x367
+	.byte	0xe
+	.long	0xcf
+	.byte	0
+	.uleb128 0xc
+	.long	.LASF20
+	.byte	0x3
+	.value	0x368
+	.byte	0xe
+	.long	0xcf
+	.byte	0x4
+	.uleb128 0xc
+	.long	.LASF21
+	.byte	0x3
+	.value	0x369
+	.byte	0xe
+	.long	0xcf
+	.byte	0x8
+	.uleb128 0xc
+	.long	.LASF22
+	.byte	0x3
+	.value	0x36a
+	.byte	0xe
+	.long	0xcf
+	.byte	0xc
+	.uleb128 0xc
+	.long	.LASF23
+	.byte	0x3
+	.value	0x36b
+	.byte	0xe
+	.long	0xcf
+	.byte	0x10
+	.byte	0
+	.uleb128 0x8
+	.long	.LASF24
+	.byte	0x3
+	.value	0x36c
+	.byte	0x3
+	.long	0x120
+	.uleb128 0x9
+	.long	.LASF25
+	.byte	0x3
+	.value	0x374
+	.byte	0x25
+	.long	0x171
+	.uleb128 0xd
+	.long	0x171
+	.long	0x19b
+	.uleb128 0xe
+	.long	0x42
+	.byte	0
+	.byte	0
+	.uleb128 0x9
+	.long	.LASF26
+	.byte	0x3
+	.value	0x375
+	.byte	0x25
+	.long	0x18b
+	.uleb128 0x9
+	.long	.LASF27
+	.byte	0x3
+	.value	0x376
+	.byte	0x1a
+	.long	0x57
+	.uleb128 0x9
+	.long	.LASF28
+	.byte	0x3
+	.value	0x377
+	.byte	0x1a
+	.long	0x57
+	.uleb128 0x9
+	.long	.LASF29
+	.byte	0x3
+	.value	0x37a
+	.byte	0x26
+	.long	0x1cf
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x171
+	.uleb128 0x9
+	.long	.LASF30
+	.byte	0x3
+	.value	0x37b
+	.byte	0x26
+	.long	0x1cf
+	.uleb128 0x2
+	.byte	0x8
+	.byte	0x4
+	.long	.LASF31
+	.uleb128 0x7
+	.long	0x1e2
+	.uleb128 0x4
+	.long	.LASF32
+	.byte	0x4
+	.byte	0xd1
+	.byte	0x17
+	.long	0x42
+	.uleb128 0xf
+	.long	.LASF96
+	.byte	0xd8
+	.byte	0x5
+	.byte	0x31
+	.byte	0x8
+	.long	0x381
+	.uleb128 0x10
+	.long	.LASF33
+	.byte	0x5
+	.byte	0x33
+	.byte	0x7
+	.long	0x57
+	.byte	0
+	.uleb128 0x10
+	.long	.LASF34
+	.byte	0x5
+	.byte	0x36
+	.byte	0x9
+	.long	0x7f
+	.byte	0x8
+	.uleb128 0x10
+	.long	.LASF35
+	.byte	0x5
+	.byte	0x37
+	.byte	0x9
+	.long	0x7f
+	.byte	0x10
+	.uleb128 0x10
+	.long	.LASF36
+	.byte	0x5
+	.byte	0x38
+	.byte	0x9
+	.long	0x7f
+	.byte	0x18
+	.uleb128 0x10
+	.long	.LASF37
+	.byte	0x5
+	.byte	0x39
+	.byte	0x9
+	.long	0x7f
+	.byte	0x20
+	.uleb128 0x10
+	.long	.LASF38
+	.byte	0x5
+	.byte	0x3a
+	.byte	0x9
+	.long	0x7f
+	.byte	0x28
+	.uleb128 0x10
+	.long	.LASF39
+	.byte	0x5
+	.byte	0x3b
+	.byte	0x9
+	.long	0x7f
+	.byte	0x30
+	.uleb128 0x10
+	.long	.LASF40
+	.byte	0x5
+	.byte	0x3c
+	.byte	0x9
+	.long	0x7f
+	.byte	0x38
+	.uleb128 0x10
+	.long	.LASF41
+	.byte	0x5
+	.byte	0x3d
+	.byte	0x9
+	.long	0x7f
+	.byte	0x40
+	.uleb128 0x10
+	.long	.LASF42
+	.byte	0x5
+	.byte	0x40
+	.byte	0x9
+	.long	0x7f
+	.byte	0x48
+	.uleb128 0x10
+	.long	.LASF43
+	.byte	0x5
+	.byte	0x41
+	.byte	0x9
+	.long	0x7f
+	.byte	0x50
+	.uleb128 0x10
+	.long	.LASF44
+	.byte	0x5
+	.byte	0x42
+	.byte	0x9
+	.long	0x7f
+	.byte	0x58
+	.uleb128 0x10
+	.long	.LASF45
+	.byte	0x5
+	.byte	0x44
+	.byte	0x16
+	.long	0x39a
+	.byte	0x60
+	.uleb128 0x10
+	.long	.LASF46
+	.byte	0x5
+	.byte	0x46
+	.byte	0x14
+	.long	0x3a0
+	.byte	0x68
+	.uleb128 0x10
+	.long	.LASF47
+	.byte	0x5
+	.byte	0x48
+	.byte	0x7
+	.long	0x57
+	.byte	0x70
+	.uleb128 0x10
+	.long	.LASF48
+	.byte	0x5
+	.byte	0x49
+	.byte	0x7
+	.long	0x57
+	.byte	0x74
+	.uleb128 0x10
+	.long	.LASF49
+	.byte	0x5
+	.byte	0x4a
+	.byte	0xb
+	.long	0x65
+	.byte	0x78
+	.uleb128 0x10
+	.long	.LASF50
+	.byte	0x5
+	.byte	0x4d
+	.byte	0x12
+	.long	0x34
+	.byte	0x80
+	.uleb128 0x10
+	.long	.LASF51
+	.byte	0x5
+	.byte	0x4e
+	.byte	0xf
+	.long	0x49
+	.byte	0x82
+	.uleb128 0x10
+	.long	.LASF52
+	.byte	0x5
+	.byte	0x4f
+	.byte	0x8
+	.long	0x3a6
+	.byte	0x83
+	.uleb128 0x10
+	.long	.LASF53
+	.byte	0x5
+	.byte	0x51
+	.byte	0xf
+	.long	0x3b6
+	.byte	0x88
+	.uleb128 0x10
+	.long	.LASF54
+	.byte	0x5
+	.byte	0x59
+	.byte	0xd
+	.long	0x71
+	.byte	0x90
+	.uleb128 0x10
+	.long	.LASF55
+	.byte	0x5
+	.byte	0x5b
+	.byte	0x17
+	.long	0x3c1
+	.byte	0x98
+	.uleb128 0x10
+	.long	.LASF56
+	.byte	0x5
+	.byte	0x5c
+	.byte	0x19
+	.long	0x3cc
+	.byte	0xa0
+	.uleb128 0x10
+	.long	.LASF57
+	.byte	0x5
+	.byte	0x5d
+	.byte	0x14
+	.long	0x3a0
+	.byte	0xa8
+	.uleb128 0x10
+	.long	.LASF58
+	.byte	0x5
+	.byte	0x5e
+	.byte	0x9
+	.long	0x7d
+	.byte	0xb0
+	.uleb128 0x10
+	.long	.LASF59
+	.byte	0x5
+	.byte	0x5f
+	.byte	0xa
+	.long	0x1ee
+	.byte	0xb8
+	.uleb128 0x10
+	.long	.LASF60
+	.byte	0x5
+	.byte	0x60
+	.byte	0x7
+	.long	0x57
+	.byte	0xc0
+	.uleb128 0x10
+	.long	.LASF61
+	.byte	0x5
+	.byte	0x62
+	.byte	0x8
+	.long	0x3d2
+	.byte	0xc4
+	.byte	0
+	.uleb128 0x4
+	.long	.LASF62
+	.byte	0x6
+	.byte	0x7
+	.byte	0x19
+	.long	0x1fa
+	.uleb128 0x11
+	.long	.LASF97
+	.byte	0x5
+	.byte	0x2b
+	.byte	0xe
+	.uleb128 0xa
+	.long	.LASF64
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x395
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x1fa
+	.uleb128 0xd
+	.long	0x85
+	.long	0x3b6
+	.uleb128 0xe
+	.long	0x42
+	.byte	0
+	.byte	0
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x38d
+	.uleb128 0xa
+	.long	.LASF65
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x3bc
+	.uleb128 0xa
+	.long	.LASF66
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x3c7
+	.uleb128 0xd
+	.long	0x85
+	.long	0x3e2
+	.uleb128 0xe
+	.long	0x42
+	.byte	0x13
+	.byte	0
+	.uleb128 0x12
+	.long	.LASF67
+	.byte	0x7
+	.byte	0x89
+	.byte	0xe
+	.long	0x3ee
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x381
+	.uleb128 0x12
+	.long	.LASF68
+	.byte	0x7
+	.byte	0x8a
+	.byte	0xe
+	.long	0x3ee
+	.uleb128 0x12
+	.long	.LASF69
+	.byte	0x7
+	.byte	0x8b
+	.byte	0xe
+	.long	0x3ee
+	.uleb128 0x12
+	.long	.LASF70
+	.byte	0x8
+	.byte	0x1a
+	.byte	0xc
+	.long	0x57
+	.uleb128 0xd
+	.long	0x42e
+	.long	0x423
+	.uleb128 0x13
+	.byte	0
+	.uleb128 0x7
+	.long	0x418
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x8c
+	.uleb128 0x7
+	.long	0x428
+	.uleb128 0x12
+	.long	.LASF71
+	.byte	0x8
+	.byte	0x1b
+	.byte	0x1a
+	.long	0x423
+	.uleb128 0x2
+	.byte	0x8
+	.byte	0x7
+	.long	.LASF72
+	.uleb128 0x14
+	.long	.LASF88
+	.byte	0x1
+	.byte	0x20
+	.byte	0x5
+	.long	0x57
+	.quad	.LFB8
+	.quad	.LFE8-.LFB8
+	.uleb128 0x1
+	.byte	0x9c
+	.long	0x819
+	.uleb128 0x15
+	.long	.LASF73
+	.byte	0x1
+	.byte	0x20
+	.byte	0xe
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000212
+	.uleb128 0x15
+	.long	.LASF74
+	.byte	0x1
+	.byte	0x20
+	.byte	0x1a
+	.long	0x819
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000224
+	.uleb128 0x16
+	.long	.LASF75
+	.byte	0x1
+	.byte	0x22
+	.byte	0x8
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000196
+	.uleb128 0x16
+	.long	.LASF76
+	.byte	0x1
+	.byte	0x22
+	.byte	0xe
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000192
+	.uleb128 0x17
+	.string	"a"
+	.byte	0x1
+	.byte	0x23
+	.byte	0xb
+	.long	0x81f
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000032
+	.uleb128 0x17
+	.string	"b"
+	.byte	0x1
+	.byte	0x24
+	.byte	0xa
+	.long	0x81f
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -6000032
+	.uleb128 0x17
+	.string	"c"
+	.byte	0x1
+	.byte	0x25
+	.byte	0xa
+	.long	0x81f
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -4000032
+	.uleb128 0x16
+	.long	.LASF77
+	.byte	0x1
+	.byte	0x26
+	.byte	0xa
+	.long	0x81f
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -2000032
+	.uleb128 0x16
+	.long	.LASF78
+	.byte	0x1
+	.byte	0x2d
+	.byte	0x9
+	.long	0xb7
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000112
+	.uleb128 0x16
+	.long	.LASF79
+	.byte	0x1
+	.byte	0x2e
+	.byte	0x9
+	.long	0xb7
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000104
+	.uleb128 0x16
+	.long	.LASF80
+	.byte	0x1
+	.byte	0x30
+	.byte	0x8
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000140
+	.uleb128 0x18
+	.quad	.LBB7
+	.quad	.LBE7-.LBB7
+	.long	0x6d8
+	.uleb128 0x16
+	.long	.LASF81
+	.byte	0x1
+	.byte	0x3d
+	.byte	0xe
+	.long	0x1e2
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000072
+	.uleb128 0x16
+	.long	.LASF82
+	.byte	0x1
+	.byte	0x43
+	.byte	0xb
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000124
+	.uleb128 0x17
+	.string	"rem"
+	.byte	0x1
+	.byte	0x44
+	.byte	0xb
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000120
+	.uleb128 0x16
+	.long	.LASF83
+	.byte	0x1
+	.byte	0x45
+	.byte	0xb
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000180
+	.uleb128 0x16
+	.long	.LASF84
+	.byte	0x1
+	.byte	0x4f
+	.byte	0xf
+	.long	0x837
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000064
+	.uleb128 0x16
+	.long	.LASF85
+	.byte	0x1
+	.byte	0x50
+	.byte	0xf
+	.long	0x837
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000056
+	.uleb128 0x16
+	.long	.LASF86
+	.byte	0x1
+	.byte	0x6e
+	.byte	0xe
+	.long	0x1e2
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000048
+	.uleb128 0x18
+	.quad	.LBB8
+	.quad	.LBE8-.LBB8
+	.long	0x603
+	.uleb128 0x17
+	.string	"i"
+	.byte	0x1
+	.byte	0x35
+	.byte	0x10
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000188
+	.uleb128 0x19
+	.quad	.LBB9
+	.quad	.LBE9-.LBB9
+	.uleb128 0x17
+	.string	"j"
+	.byte	0x1
+	.byte	0x36
+	.byte	0x13
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000184
+	.byte	0
+	.byte	0
+	.uleb128 0x18
+	.quad	.LBB10
+	.quad	.LBE10-.LBB10
+	.long	0x64d
+	.uleb128 0x17
+	.string	"p"
+	.byte	0x1
+	.byte	0x46
+	.byte	0x10
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000176
+	.uleb128 0x19
+	.quad	.LBB11
+	.quad	.LBE11-.LBB11
+	.uleb128 0x16
+	.long	.LASF87
+	.byte	0x1
+	.byte	0x47
+	.byte	0xe
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000116
+	.byte	0
+	.byte	0
+	.uleb128 0x19
+	.quad	.LBB12
+	.quad	.LBE12-.LBB12
+	.uleb128 0x17
+	.string	"i"
+	.byte	0x1
+	.byte	0x58
+	.byte	0x10
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000172
+	.uleb128 0x19
+	.quad	.LBB13
+	.quad	.LBE13-.LBB13
+	.uleb128 0x17
+	.string	"k"
+	.byte	0x1
+	.byte	0x59
+	.byte	0x13
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000168
+	.uleb128 0x19
+	.quad	.LBB14
+	.quad	.LBE14-.LBB14
+	.uleb128 0x17
+	.string	"a_k"
+	.byte	0x1
+	.byte	0x5a
+	.byte	0x17
+	.long	0x1e2
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000040
+	.uleb128 0x19
+	.quad	.LBB15
+	.quad	.LBE15-.LBB15
+	.uleb128 0x17
+	.string	"j"
+	.byte	0x1
+	.byte	0x5b
+	.byte	0x19
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000164
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.uleb128 0x19
+	.quad	.LBB16
+	.quad	.LBE16-.LBB16
+	.uleb128 0x16
+	.long	.LASF82
+	.byte	0x1
+	.byte	0x85
+	.byte	0xb
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000136
+	.uleb128 0x17
+	.string	"rem"
+	.byte	0x1
+	.byte	0x86
+	.byte	0xb
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000132
+	.uleb128 0x16
+	.long	.LASF83
+	.byte	0x1
+	.byte	0x87
+	.byte	0xb
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000160
+	.uleb128 0x16
+	.long	.LASF84
+	.byte	0x1
+	.byte	0x91
+	.byte	0xf
+	.long	0x837
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000096
+	.uleb128 0x16
+	.long	.LASF85
+	.byte	0x1
+	.byte	0x92
+	.byte	0xf
+	.long	0x837
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000088
+	.uleb128 0x18
+	.quad	.LBB17
+	.quad	.LBE17-.LBB17
+	.long	0x78d
+	.uleb128 0x17
+	.string	"p"
+	.byte	0x1
+	.byte	0x88
+	.byte	0x10
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000156
+	.uleb128 0x19
+	.quad	.LBB18
+	.quad	.LBE18-.LBB18
+	.uleb128 0x16
+	.long	.LASF87
+	.byte	0x1
+	.byte	0x89
+	.byte	0xe
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000128
+	.byte	0
+	.byte	0
+	.uleb128 0x19
+	.quad	.LBB19
+	.quad	.LBE19-.LBB19
+	.uleb128 0x17
+	.string	"i"
+	.byte	0x1
+	.byte	0x9a
+	.byte	0x10
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000152
+	.uleb128 0x19
+	.quad	.LBB20
+	.quad	.LBE20-.LBB20
+	.uleb128 0x17
+	.string	"k"
+	.byte	0x1
+	.byte	0x9b
+	.byte	0x13
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000148
+	.uleb128 0x19
+	.quad	.LBB21
+	.quad	.LBE21-.LBB21
+	.uleb128 0x17
+	.string	"aik"
+	.byte	0x1
+	.byte	0x9c
+	.byte	0x14
+	.long	0x1e2
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000080
+	.uleb128 0x19
+	.quad	.LBB22
+	.quad	.LBE22-.LBB22
+	.uleb128 0x17
+	.string	"j"
+	.byte	0x1
+	.byte	0x9d
+	.byte	0x16
+	.long	0x57
+	.uleb128 0x5
+	.byte	0x91
+	.sleb128 -8000144
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x7f
+	.uleb128 0xd
+	.long	0x1e2
+	.long	0x837
+	.uleb128 0x1a
+	.long	0x42
+	.value	0x1f3
+	.uleb128 0x1a
+	.long	0x42
+	.value	0x1f3
+	.byte	0
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x1e2
+	.uleb128 0x1b
+	.long	.LASF89
+	.byte	0x1
+	.byte	0x14
+	.byte	0x5
+	.long	0x57
+	.quad	.LFB7
+	.quad	.LFE7-.LFB7
+	.uleb128 0x1
+	.byte	0x9c
+	.long	0x8bc
+	.uleb128 0x15
+	.long	.LASF90
+	.byte	0x1
+	.byte	0x14
+	.byte	0x1b
+	.long	0x8cd
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -40
+	.uleb128 0x1c
+	.string	"res"
+	.byte	0x1
+	.byte	0x14
+	.byte	0x44
+	.long	0x8cd
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -48
+	.uleb128 0x19
+	.quad	.LBB5
+	.quad	.LBE5-.LBB5
+	.uleb128 0x17
+	.string	"i"
+	.byte	0x1
+	.byte	0x16
+	.byte	0xd
+	.long	0x57
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -24
+	.uleb128 0x19
+	.quad	.LBB6
+	.quad	.LBE6-.LBB6
+	.uleb128 0x17
+	.string	"j"
+	.byte	0x1
+	.byte	0x17
+	.byte	0x10
+	.long	0x57
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -20
+	.byte	0
+	.byte	0
+	.byte	0
+	.uleb128 0xd
+	.long	0x1e9
+	.long	0x8cd
+	.uleb128 0x1a
+	.long	0x42
+	.value	0x1f3
+	.byte	0
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x8bc
+	.uleb128 0x1d
+	.long	.LASF98
+	.byte	0x1
+	.byte	0x7
+	.byte	0x6
+	.quad	.LFB6
+	.quad	.LFE6-.LFB6
+	.uleb128 0x1
+	.byte	0x9c
+	.long	0x97c
+	.uleb128 0x15
+	.long	.LASF91
+	.byte	0x1
+	.byte	0x7
+	.byte	0x20
+	.long	0x98d
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -40
+	.uleb128 0x15
+	.long	.LASF92
+	.byte	0x1
+	.byte	0x7
+	.byte	0x41
+	.long	0x98d
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -48
+	.uleb128 0x1c
+	.string	"res"
+	.byte	0x1
+	.byte	0x8
+	.byte	0x20
+	.long	0x98d
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -56
+	.uleb128 0x19
+	.quad	.LBB2
+	.quad	.LBE2-.LBB2
+	.uleb128 0x17
+	.string	"i"
+	.byte	0x1
+	.byte	0xa
+	.byte	0xe
+	.long	0x57
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -28
+	.uleb128 0x19
+	.quad	.LBB3
+	.quad	.LBE3-.LBB3
+	.uleb128 0x17
+	.string	"j"
+	.byte	0x1
+	.byte	0xb
+	.byte	0x12
+	.long	0x57
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -24
+	.uleb128 0x19
+	.quad	.LBB4
+	.quad	.LBE4-.LBB4
+	.uleb128 0x17
+	.string	"k"
+	.byte	0x1
+	.byte	0xd
+	.byte	0x16
+	.long	0x57
+	.uleb128 0x2
+	.byte	0x91
+	.sleb128 -20
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.uleb128 0xd
+	.long	0x1e2
+	.long	0x98d
+	.uleb128 0x1a
+	.long	0x42
+	.value	0x1f3
+	.byte	0
+	.uleb128 0x6
+	.byte	0x8
+	.long	0x97c
+	.byte	0
+	.section	.debug_abbrev,"",@progbits
+.Ldebug_abbrev0:
+	.uleb128 0x1
+	.uleb128 0x11
+	.byte	0x1
+	.uleb128 0x25
+	.uleb128 0xe
+	.uleb128 0x13
+	.uleb128 0xb
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x1b
+	.uleb128 0xe
+	.uleb128 0x11
+	.uleb128 0x1
+	.uleb128 0x12
+	.uleb128 0x7
+	.uleb128 0x10
+	.uleb128 0x17
+	.byte	0
+	.byte	0
+	.uleb128 0x2
+	.uleb128 0x24
+	.byte	0
+	.uleb128 0xb
+	.uleb128 0xb
+	.uleb128 0x3e
+	.uleb128 0xb
+	.uleb128 0x3
+	.uleb128 0xe
+	.byte	0
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0x24
+	.byte	0
+	.uleb128 0xb
+	.uleb128 0xb
+	.uleb128 0x3e
+	.uleb128 0xb
+	.uleb128 0x3
+	.uleb128 0x8
+	.byte	0
+	.byte	0
+	.uleb128 0x4
+	.uleb128 0x16
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x5
+	.uleb128 0xf
+	.byte	0
+	.uleb128 0xb
+	.uleb128 0xb
+	.byte	0
+	.byte	0
+	.uleb128 0x6
+	.uleb128 0xf
+	.byte	0
+	.uleb128 0xb
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x7
+	.uleb128 0x26
+	.byte	0
+	.uleb128 0x49
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x8
+	.uleb128 0x16
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0x5
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x9
+	.uleb128 0x34
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0x5
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x3f
+	.uleb128 0x19
+	.uleb128 0x3c
+	.uleb128 0x19
+	.byte	0
+	.byte	0
+	.uleb128 0xa
+	.uleb128 0x13
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3c
+	.uleb128 0x19
+	.byte	0
+	.byte	0
+	.uleb128 0xb
+	.uleb128 0x13
+	.byte	0x1
+	.uleb128 0xb
+	.uleb128 0xb
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0x5
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x1
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0xc
+	.uleb128 0xd
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0x5
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x38
+	.uleb128 0xb
+	.byte	0
+	.byte	0
+	.uleb128 0xd
+	.uleb128 0x1
+	.byte	0x1
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x1
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0xe
+	.uleb128 0x21
+	.byte	0
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2f
+	.uleb128 0xb
+	.byte	0
+	.byte	0
+	.uleb128 0xf
+	.uleb128 0x13
+	.byte	0x1
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0xb
+	.uleb128 0xb
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x1
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x10
+	.uleb128 0xd
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x38
+	.uleb128 0xb
+	.byte	0
+	.byte	0
+	.uleb128 0x11
+	.uleb128 0x16
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.byte	0
+	.byte	0
+	.uleb128 0x12
+	.uleb128 0x34
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x3f
+	.uleb128 0x19
+	.uleb128 0x3c
+	.uleb128 0x19
+	.byte	0
+	.byte	0
+	.uleb128 0x13
+	.uleb128 0x21
+	.byte	0
+	.byte	0
+	.byte	0
+	.uleb128 0x14
+	.uleb128 0x2e
+	.byte	0x1
+	.uleb128 0x3f
+	.uleb128 0x19
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x27
+	.uleb128 0x19
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x11
+	.uleb128 0x1
+	.uleb128 0x12
+	.uleb128 0x7
+	.uleb128 0x40
+	.uleb128 0x18
+	.uleb128 0x2116
+	.uleb128 0x19
+	.uleb128 0x1
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x15
+	.uleb128 0x5
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2
+	.uleb128 0x18
+	.byte	0
+	.byte	0
+	.uleb128 0x16
+	.uleb128 0x34
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2
+	.uleb128 0x18
+	.byte	0
+	.byte	0
+	.uleb128 0x17
+	.uleb128 0x34
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0x8
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2
+	.uleb128 0x18
+	.byte	0
+	.byte	0
+	.uleb128 0x18
+	.uleb128 0xb
+	.byte	0x1
+	.uleb128 0x11
+	.uleb128 0x1
+	.uleb128 0x12
+	.uleb128 0x7
+	.uleb128 0x1
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x19
+	.uleb128 0xb
+	.byte	0x1
+	.uleb128 0x11
+	.uleb128 0x1
+	.uleb128 0x12
+	.uleb128 0x7
+	.byte	0
+	.byte	0
+	.uleb128 0x1a
+	.uleb128 0x21
+	.byte	0
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2f
+	.uleb128 0x5
+	.byte	0
+	.byte	0
+	.uleb128 0x1b
+	.uleb128 0x2e
+	.byte	0x1
+	.uleb128 0x3f
+	.uleb128 0x19
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x27
+	.uleb128 0x19
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x11
+	.uleb128 0x1
+	.uleb128 0x12
+	.uleb128 0x7
+	.uleb128 0x40
+	.uleb128 0x18
+	.uleb128 0x2117
+	.uleb128 0x19
+	.uleb128 0x1
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x1c
+	.uleb128 0x5
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0x8
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2
+	.uleb128 0x18
+	.byte	0
+	.byte	0
+	.uleb128 0x1d
+	.uleb128 0x2e
+	.byte	0x1
+	.uleb128 0x3f
+	.uleb128 0x19
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x27
+	.uleb128 0x19
+	.uleb128 0x11
+	.uleb128 0x1
+	.uleb128 0x12
+	.uleb128 0x7
+	.uleb128 0x40
+	.uleb128 0x18
+	.uleb128 0x2117
+	.uleb128 0x19
+	.uleb128 0x1
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.byte	0
+	.section	.debug_aranges,"",@progbits
+	.long	0x2c
+	.value	0x2
+	.long	.Ldebug_info0
+	.byte	0x8
+	.byte	0
+	.value	0
+	.value	0
+	.quad	.Ltext0
+	.quad	.Letext0-.Ltext0
+	.quad	0
+	.quad	0
+	.section	.debug_line,"",@progbits
+.Ldebug_line0:
+	.section	.debug_str,"MS",@progbits,1
+.LASF10:
+	.string	"MPI_Datatype"
+.LASF56:
+	.string	"_wide_data"
+.LASF25:
+	.string	"MPIR_F08_MPI_STATUS_IGNORE_OBJ"
+.LASF19:
+	.string	"count_lo"
+.LASF36:
+	.string	"_IO_read_base"
+.LASF96:
+	.string	"_IO_FILE"
+.LASF13:
+	.string	"MPI_WEIGHTS_EMPTY"
+.LASF70:
+	.string	"sys_nerr"
+.LASF44:
+	.string	"_IO_save_end"
+.LASF5:
+	.string	"short int"
+.LASF87:
+	.string	"rows"
+.LASF54:
+	.string	"_offset"
+.LASF94:
+	.string	"mpi_matrix_base.c"
+.LASF79:
+	.string	"displs"
+.LASF38:
+	.string	"_IO_write_ptr"
+.LASF33:
+	.string	"_flags"
+.LASF14:
+	.string	"MPI_Fint"
+.LASF53:
+	.string	"_lock"
+.LASF45:
+	.string	"_markers"
+.LASF23:
+	.string	"MPI_ERROR"
+.LASF84:
+	.string	"A_local"
+.LASF58:
+	.string	"_freeres_buf"
+.LASF27:
+	.string	"MPIR_F08_MPI_IN_PLACE"
+.LASF91:
+	.string	"mat1"
+.LASF75:
+	.string	"rank"
+.LASF74:
+	.string	"argv"
+.LASF62:
+	.string	"FILE"
+.LASF69:
+	.string	"stderr"
+.LASF17:
+	.string	"MPI_F_STATUS_IGNORE"
+.LASF15:
+	.string	"long long int"
+.LASF95:
+	.string	"/home/haibin/distributed_system/assignment1"
+.LASF9:
+	.string	"char"
+.LASF12:
+	.string	"MPI_UNWEIGHTED"
+.LASF22:
+	.string	"MPI_TAG"
+.LASF83:
+	.string	"offset"
+.LASF50:
+	.string	"_cur_column"
+.LASF98:
+	.string	"brute_force_matmul"
+.LASF86:
+	.string	"finish"
+.LASF11:
+	.string	"MPI_Comm"
+.LASF26:
+	.string	"MPIR_F08_MPI_STATUSES_IGNORE_OBJ"
+.LASF0:
+	.string	"unsigned char"
+.LASF24:
+	.string	"MPI_F08_status"
+.LASF21:
+	.string	"MPI_SOURCE"
+.LASF73:
+	.string	"argc"
+.LASF4:
+	.string	"signed char"
+.LASF55:
+	.string	"_codecvt"
+.LASF72:
+	.string	"long long unsigned int"
+.LASF76:
+	.string	"mpiSize"
+.LASF2:
+	.string	"unsigned int"
+.LASF64:
+	.string	"_IO_marker"
+.LASF52:
+	.string	"_shortbuf"
+.LASF63:
+	.string	"MPIR_T_pvar_handle_s"
+.LASF3:
+	.string	"long unsigned int"
+.LASF35:
+	.string	"_IO_read_end"
+.LASF49:
+	.string	"_old_offset"
+.LASF37:
+	.string	"_IO_write_base"
+.LASF61:
+	.string	"_unused2"
+.LASF34:
+	.string	"_IO_read_ptr"
+.LASF31:
+	.string	"double"
+.LASF81:
+	.string	"start"
+.LASF41:
+	.string	"_IO_buf_end"
+.LASF82:
+	.string	"rows_per_proc"
+.LASF28:
+	.string	"MPIR_F08_MPI_BOTTOM"
+.LASF6:
+	.string	"long int"
+.LASF88:
+	.string	"main"
+.LASF90:
+	.string	"target"
+.LASF57:
+	.string	"_freeres_list"
+.LASF32:
+	.string	"size_t"
+.LASF59:
+	.string	"__pad5"
+.LASF85:
+	.string	"C_local"
+.LASF29:
+	.string	"MPI_F08_STATUS_IGNORE"
+.LASF1:
+	.string	"short unsigned int"
+.LASF20:
+	.string	"count_hi_and_cancelled"
+.LASF18:
+	.string	"MPI_F_STATUSES_IGNORE"
+.LASF39:
+	.string	"_IO_write_end"
+.LASF77:
+	.string	"bfRes"
+.LASF8:
+	.string	"__off64_t"
+.LASF47:
+	.string	"_fileno"
+.LASF46:
+	.string	"_chain"
+.LASF89:
+	.string	"checkRes"
+.LASF66:
+	.string	"_IO_wide_data"
+.LASF60:
+	.string	"_mode"
+.LASF7:
+	.string	"__off_t"
+.LASF43:
+	.string	"_IO_backup_base"
+.LASF67:
+	.string	"stdin"
+.LASF40:
+	.string	"_IO_buf_base"
+.LASF48:
+	.string	"_flags2"
+.LASF92:
+	.string	"mat2"
+.LASF65:
+	.string	"_IO_codecvt"
+.LASF30:
+	.string	"MPI_F08_STATUSES_IGNORE"
+.LASF16:
+	.string	"MPI_T_PVAR_ALL_HANDLES"
+.LASF78:
+	.string	"sendcounts"
+.LASF51:
+	.string	"_vtable_offset"
+.LASF42:
+	.string	"_IO_save_base"
+.LASF71:
+	.string	"sys_errlist"
+.LASF80:
+	.string	"myrows"
+.LASF68:
+	.string	"stdout"
+.LASF97:
+	.string	"_IO_lock_t"
+.LASF93:
+	.string	"GNU C17 9.4.0 -masm=intel -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
+	.ident	"GCC: (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0"
+	.section	.note.GNU-stack,"",@progbits
+	.section	.note.gnu.property,"a"
+	.align 8
+	.long	 1f - 0f
+	.long	 4f - 1f
+	.long	 5
+0:
+	.string	 "GNU"
+1:
+	.align 8
+	.long	 0xc0000002
+	.long	 3f - 2f
+2:
+	.long	 0x3
+3:
+	.align 8
+4:

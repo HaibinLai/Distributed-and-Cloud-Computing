@@ -1,0 +1,16 @@
+syntax = "proto3";
+package log;
+
+message LogEntry {
+  string level = 1;      // INFO/WARN/ERROR
+  string message = 2;
+  string source = 3;     // api_service
+  int64  ts_unix_ms = 4;
+}
+
+message LogAck { int32 count = 1; }
+
+service LoggingService {
+  // API Service 持续写入日志（单次长连接）
+  rpc StreamLogs(stream LogEntry) returns (LogAck);
+}

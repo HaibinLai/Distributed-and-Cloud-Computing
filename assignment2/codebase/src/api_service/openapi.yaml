@@ -1,1 +1,348 @@
-# write sth here.
+openapi: 3.0.3
+info:
+  title: SUSTech Merch Store API
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+paths:
+  /:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Greeting'
+          description: OK
+      summary: Greeting
+  /products:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Product'
+                type: array
+          description: OK
+      summary: List products
+  /products/{id}:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: OK
+        "404":
+          description: Not Found
+      summary: Get product
+  /users/register:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserReq'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+          description: Created
+      summary: Register user
+  /users/login:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginReq'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTToken'
+          description: OK
+        "401":
+          description: Unauthorized
+      summary: Login (issue JWT)
+  /users/me:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Get my profile
+    patch:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserReq'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+          description: OK
+      security:
+      - bearerAuth: []
+      summary: Update my profile
+  /users/deactivate:
+    post:
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearerAuth: []
+      summary: Deactivate my account
+  /orders:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrderReq'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: Created
+        "400":
+          description: Bad Request
+      security:
+      - bearerAuth: []
+      summary: Place order (<=3 items)
+  /orders/{id}:
+    delete:
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+      security:
+      - bearerAuth: []
+      summary: Cancel order (owner only)
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: OK
+        "404":
+          description: Not Found
+      security:
+      - bearerAuth: []
+      summary: Get order by id (owner only)
+components:
+  schemas:
+    Greeting:
+      example:
+        message: message
+      properties:
+        message:
+          title: message
+          type: string
+      title: Greeting
+      type: object
+    Product:
+      example:
+        price: 6.0274563
+        name: name
+        id: 0
+        category: category
+        stock: 1
+      properties:
+        id:
+          title: id
+          type: integer
+        name:
+          title: name
+          type: string
+        category:
+          title: category
+          type: string
+        price:
+          format: float
+          title: price
+          type: number
+        stock:
+          title: stock
+          type: integer
+      title: Product
+      type: object
+    UserPublic:
+      example:
+        active: true
+        id: 0
+        username: username
+      properties:
+        id:
+          title: id
+          type: integer
+        username:
+          title: username
+          type: string
+        active:
+          title: active
+          type: boolean
+      title: UserPublic
+      type: object
+    RegisterUserReq:
+      example:
+        password: password
+        username: username
+      properties:
+        username:
+          title: username
+          type: string
+        password:
+          format: password
+          title: password
+          type: string
+      required:
+      - password
+      - username
+      title: RegisterUserReq
+      type: object
+    LoginReq:
+      example:
+        password: password
+        username: username
+      properties:
+        username:
+          title: username
+          type: string
+        password:
+          format: password
+          title: password
+          type: string
+      required:
+      - password
+      - username
+      title: LoginReq
+      type: object
+    JWTToken:
+      example:
+        access_token: access_token
+        token_type: Bearer
+      properties:
+        access_token:
+          title: access_token
+          type: string
+        token_type:
+          example: Bearer
+          title: token_type
+          type: string
+      title: JWTToken
+      type: object
+    UpdateUserReq:
+      example:
+        username: username
+      properties:
+        username:
+          title: username
+          type: string
+      title: UpdateUserReq
+      type: object
+    PlaceOrderReq:
+      example:
+        quantity: 2
+        product_id: 0
+      properties:
+        product_id:
+          title: product_id
+          type: integer
+        quantity:
+          maximum: 3
+          minimum: 1
+          title: quantity
+          type: integer
+      required:
+      - product_id
+      - quantity
+      title: PlaceOrderReq
+      type: object
+    Order:
+      example:
+        quantity: 5
+        total_price: 5.637377
+        user_id: 6
+        product_id: 1
+        id: 0
+        status: PLACED
+      properties:
+        id:
+          title: id
+          type: integer
+        user_id:
+          title: user_id
+          type: integer
+        product_id:
+          title: product_id
+          type: integer
+        quantity:
+          title: quantity
+          type: integer
+        total_price:
+          format: float
+          title: total_price
+          type: number
+        status:
+          enum:
+          - PLACED
+          - CANCELED
+          title: status
+          type: string
+      title: Order
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http

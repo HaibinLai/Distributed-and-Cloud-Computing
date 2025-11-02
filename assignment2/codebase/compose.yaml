@@ -47,10 +47,9 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
-      zookeeper:
-        condition: service_healthy
-        # if zookeeper restarts, kafka will also restart
-        restart: true
+      - zookeeper
+    # Restart policy moved to service top-level (Compose v1 expects restart values like 'no', 'on-failure', 'unless-stopped', 'always')
+    restart: unless-stopped
     ports:
       - "9092:9092" # For internal Docker use
       - "9093:9093" # For external access
@@ -71,10 +70,9 @@ services:
   kafka-topic-creator:
     image: confluentinc/cp-kafka:7.7.1
     depends_on:
-      kafka:
-        condition: service_healthy
-        # if kafka restart, this creator will not restart (only create once)
-        restart: false
+      - kafka
+    # This helper should not restart automatically after it finishes
+    restart: "no"
     entrypoint: >
       bash -c "
       /bin/kafka-topics --create --topic log-channel --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1;

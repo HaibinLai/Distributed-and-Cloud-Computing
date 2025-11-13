@@ -188,17 +188,15 @@ def orders_get(page: int = None, page_size: int = None):
     )
 
 
-def orders_id_get(id, token_info=None):
+def orders_id_get(id_, token_info=None):
     """Get a single order by id."""
+
+    order_id = id_  # 为了可读性，内部你可以用 order_id 这个名字
 
     stub = _get_db_stub()
     try:
-        req = db_pb2.GetOrderRequest(id=id)
+        req = db_pb2.GetOrderRequest(id=order_id)
         order_msg = stub.GetOrder(req)
-
-        # 如果返回的是空对象（id=0），说明不存在
-        if order_msg.id == 0:
-            return _error("Order not found", 404)
 
         return _success("Order fetched", order_to_dict(order_msg), 200)
 
@@ -206,24 +204,35 @@ def orders_id_get(id, token_info=None):
         if e.code() == grpc.StatusCode.NOT_FOUND:
             return _error("Order not found", 404)
 
-        return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
+        return _error(
+            f"DB service error: {e.code().name} - {e.details()}",
+            502,
+        )
 
 
-def orders_id_delete(id, token_info=None):
-    """Cancel an order by id."""
 
+def orders_id_delete(id_, token_info=None):
+    """
+    DELETE /orders/{id}
+    取消订单：DB Service 会删除订单并把库存加回去。
+    """
     stub = _get_db_stub()
+
+    # 如果要做“只能删自己的订单”的权限控制，可以先 GetOrder 看 user_id 是否等于 token_info["user_id"]
+
     try:
-        req = db_pb2.DeleteOrderRequest(id=id)
-        resp = stub.DeleteOrder(req)
-
-        if not resp.success:
-            return _error("Order not found", 404)
-
-        return _success(f"Order {id} deleted successfully", None, 200)
+        req = db_pb2.DeleteOrderRequest(id=id_)
+        # DeleteOrder 一般返回 google.protobuf.Empty，不用关心 resp 内容
+        stub.DeleteOrder(req)
 
     except grpc.RpcError as e:
+        if e.code() == grpc.StatusCode.NOT_FOUND:
+            return _error("Order not found", 404)
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
+
+    # 调用成功就认为删除成功
+    return _success("Order deleted", None, 200)
+
 
 
 from openapi_server.models.order_create_request import OrderCreateRequest

@@ -530,6 +530,85 @@ class DbService(db_pb2_grpc.DbServiceServicer):
             release_connection(conn)
 
 
+    def GetOrder(self, request, context):
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT id, user_id, product_id, quantity, total_price, created_at
+                        FROM orders
+                        WHERE id = %s
+                        """,
+                        (request.id,),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        context.abort(grpc.StatusCode.NOT_FOUND, "order not found")
+
+                    return row_to_order(row)
+
+        finally:
+            release_connection(conn)
+
+
+    def DeleteOrder(self, request, context):
+        """
+        取消订单：
+        1. 查出订单的 product_id 和 quantity，并锁住这条订单记录；
+        2. 删除订单；
+        3. 把数量加回对应商品的库存。
+        """
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    # 1. 查订单，并加行锁，防止并发修改
+                    cur.execute(
+                        """
+                        SELECT product_id, quantity
+                        FROM orders
+                        WHERE id = %s
+                        FOR UPDATE
+                        """,
+                        (request.id,),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        # 订单不存在
+                        context.abort(grpc.StatusCode.NOT_FOUND, "order not found")
+
+                    product_id, qty = row
+
+                    # 2. 删除订单
+                    cur.execute(
+                        """
+                        DELETE FROM orders
+                        WHERE id = %s
+                        """,
+                        (request.id,),
+                    )
+
+                    # 3. 库存加回去
+                    cur.execute(
+                        """
+                        UPDATE products
+                        SET stock = stock + %s
+                        WHERE id = %s
+                        """,
+                        (qty, product_id),
+                    )
+
+            return db_pb2.DeleteOrderResponse(success=True)
+
+        finally:
+            release_connection(conn)
+
+    
+
+
+
 # ---------- 启动 gRPC Server ----------
 
 

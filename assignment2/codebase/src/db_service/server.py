@@ -286,7 +286,8 @@ class DbService(db_pb2_grpc.DbServiceServicer):
                         context.set_code(grpc.StatusCode.NOT_FOUND)
                         context.set_details(f"user with sid={request.sid} not found")
                         # 返回一个空的响应即可，不要去 row_to_user(None)
-                        return None
+                        # 好像不能这样！ gRPC 规范要求必须返回一个 User
+                        return db_pb2.User()
 
                     # 把 row 转成 User proto
                     user_msg = row_to_user2(row)

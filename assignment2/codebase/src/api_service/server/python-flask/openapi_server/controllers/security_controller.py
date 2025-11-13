@@ -1,39 +1,31 @@
-from typing import Optional, Dict
+import os
+import jwt
+from jwt import InvalidTokenError, ExpiredSignatureError
 
+JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")
+JWT_ALGORITHM = "HS256"
 
-def info_from_bearerAuth(token: str) -> Optional[Dict]:
+def info_from_bearerAuth(token: str):
     """
-    Validate fake JWT token and set current user context.
+    Check and retrieve authentication information from custom bearer token.
+    Returned value will be passed in 'token_info' parameter of your operation function, if there is one.
+    'sub' or 'uid' will be set in 'user' parameter of your operation function, if there is one.
 
-    Token format (for step 1 fake auth):
-        "fake-jwt-token-for-{sid}"
-
-    :param token: Token from Authorization header ("Bearer <token>")
-    :return: dict with user info if valid, or None if invalid (Connexion 会返回 401)
+    :param token: Token provided by Authorization header (without 'Bearer ')
+    :type token: str
+    :return: Decoded token information or None if token is invalid
+    :rtype: dict | None
     """
-    # 为了避免循环导入，这里在函数内部导入
-    from openapi_server.controllers import users_controller as uc
-
-    if not token:
+    try:
+        # 解 JWT，验证签名和 exp
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        # 你登录生成里放了 sid 和 user_id，这里直接返回整个 payload
+        return payload
+    except ExpiredSignatureError:
+        # 过期
+        print("[JWT] Token expired")
         return None
-
-    prefix = "fake-jwt-token-for-"
-    if not token.startswith(prefix):
-        # token 不合法，返回 None -> 401
+    except InvalidTokenError as e:
+        # 签名错误 / 格式错误 / 算法不对等都进这里
+        print(f"[JWT] Invalid token: {e}")
         return None
-
-    sid = token[len(prefix):]
-
-    user = uc.USERS.get(sid)
-    if user is None or not user.get("is_active", False):
-        return None
-
-    # 把当前请求的“登录用户”设置到全局，方便你之前基于 CURRENT_SID 的逻辑复用
-    uc.CURRENT_SID = sid
-
-    # 返回的字典会作为 token_info 传给 operation（如果函数签名里有 token_info 参数）
-    return {
-        "uid": user["id"],   # 你可以理解为 user_id
-        "sid": sid,
-        "sub": sid,          # 有些人习惯把 subject 放 sub 里
-    }

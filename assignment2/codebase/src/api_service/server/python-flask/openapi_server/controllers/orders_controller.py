@@ -1,61 +1,103 @@
 import connexion
-from typing import Dict
-from typing import Tuple
-from typing import Union
+from typing import Dict, Tuple, Union, List
 
-from openapi_server.models.error_response import ErrorResponse  # noqa: E501
-from openapi_server.models.order import Order  # noqa: E501
-from openapi_server.models.order_create_request import OrderCreateRequest  # noqa: E501
-from openapi_server import util
+from openapi_server.models.error_response import ErrorResponse
+from openapi_server.models.order import Order
+from openapi_server.models.order_create_request import OrderCreateRequest
 
 
-def orders_get():  # noqa: E501
-    """List all orders of current user
-
-     # noqa: E501
-
-
-    :rtype: Union[List[Order], Tuple[List[Order], int], Tuple[List[Order], int, Dict[str, str]]
-    """
-    return 'do some magic!'
-
-
-def orders_id_delete(id):  # noqa: E501
-    """Cancel an order
-
-     # noqa: E501
-
-    :param id: 
-    :type id: int
-
-    :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
-    """
-    return 'do some magic!'
+# ---- Fake Data Storage (for Step 1 only) ----
+FAKE_ORDERS = [
+    {
+        "id": 1,
+        "user_id": 999,
+        "product_id": 101,
+        "quantity": 2,
+        "total_price": "59.98",
+        "created_at": "2024-01-15T10:30:00Z",
+    },
+    {
+        "id": 2,
+        "user_id": 999,
+        "product_id": 102,
+        "quantity": 1,
+        "total_price": "29.99",
+        "created_at": "2024-01-20T12:00:00Z",
+    }
+]
+# ---------------------------------------------
 
 
-def orders_id_get(id):  # noqa: E501
-    """Get an order by id (current user&#39;s order)
-
-     # noqa: E501
-
-    :param id: 
-    :type id: int
-
-    :rtype: Union[Order, Tuple[Order, int], Tuple[Order, int, Dict[str, str]]
-    """
-    return 'do some magic!'
+def _success(message: str, data=None, code=200):
+    """Helper: success response."""
+    return {
+        "success": True,
+        "message": message,
+        "data": data
+    }, code
 
 
-def orders_post(order_create_request):  # noqa: E501
-    """Place an order
+def _error(message: str, code: int):
+    """Helper: error response."""
+    return {
+        "success": False,
+        "error": message,
+        "code": code
+    }, code
 
-     # noqa: E501
 
-    :param order_create_request: 
-    :type order_create_request: dict | bytes
+def orders_get():
+    """List all orders of current user (FAKE)."""
 
-    :rtype: Union[Order, Tuple[Order, int], Tuple[Order, int, Dict[str, str]]
-    """
+    # 这里暂时不验证 JWT，因为只是 fake 版本
+    return _success(
+        "Orders fetched successfully",
+        data=FAKE_ORDERS,
+        code=200
+    )
+
+
+def orders_id_delete(id):
+    """Cancel an order by id (FAKE)."""
+
+    global FAKE_ORDERS
+    for o in FAKE_ORDERS:
+        if o["id"] == id:
+            FAKE_ORDERS = [x for x in FAKE_ORDERS if x["id"] != id]
+            return _success(f"Order {id} cancelled successfully", None, 200)
+
+    return _error("Order not found", 404)
+
+
+def orders_id_get(id):
+    """Get a single order by id (FAKE)."""
+
+    for o in FAKE_ORDERS:
+        if o["id"] == id:
+            return _success("Order found", o, 200)
+
+    return _error("Order not found", 404)
+
+
+def orders_post(order_create_request):
+    """Create a new fake order."""
+
     if connexion.request.is_json:
-        order_create_request = OrderCreateRequest.from_dict(connexion.request.get_json())  # noqa: E501
-    return 'do some magic!'
+        order_create_request = OrderCreateRequest.from_dict(
+            connexion.request.get_json()
+        )
+
+    new_id = max(o["id"] for o in FAKE_ORDERS) + 1
+
+    fake_order = {
+        "id": new_id,
+        "user_id": 999,  # 假用户
+        "product_id": order_create_request.product_id,
+        "quantity": order_create_request.quantity,
+        "total_price": f"{29.99 * order_create_request.quantity:.2f}",
+        "created_at": "2024-01-22T18:00:00Z",
+    }
+
+    FAKE_ORDERS.append(fake_order)
+
+    return _success("Order created successfully", fake_order, 201)

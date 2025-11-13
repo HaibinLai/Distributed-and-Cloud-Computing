@@ -190,6 +190,31 @@ class DbService(db_pb2_grpc.DbServiceServicer):
         finally:
             conn.close()
 
+    def GetProduct(self, request, context):
+        """
+        根据 id 返回单个商品
+        """
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT id, name, description, category, price, slogan, stock, created_at
+                        FROM products
+                        WHERE id = %s
+                        """,
+                        (request.id,),
+                    )
+                    row = cur.fetchone()
+                    if row is None:
+                        # gRPC 层返回 NOT_FOUND，API 那边可以翻译成 404
+                        context.abort(grpc.StatusCode.NOT_FOUND, "product not found")
+                    return row_to_product(row)
+        finally:
+            conn.close()
+
+
     # ---- Users ----
     def CreateUser(self, request, context):
         conn = get_connection()

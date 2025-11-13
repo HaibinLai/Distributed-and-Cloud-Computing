@@ -5,23 +5,70 @@ from datetime import timezone
 
 import grpc
 import psycopg2
+from psycopg2.pool import SimpleConnectionPool
 from google.protobuf.timestamp_pb2 import Timestamp
 
 import db_pb2
 import db_pb2_grpc
 
+# import psycopg2
+
 # ---------- 数据库工具 ----------
+
+# def get_connection():
+#     """
+#     简单起见：每个 RPC 新建一个连接。
+#     真要上生产可改成连接池，比如 psycopg2.pool.SimpleConnectionPool。
+#     """
+#     dsn = os.environ.get(
+#         "PG_DSN",
+#         "dbname=goodsstore user=dncc password=dncc host=localhost port=5432",
+#     )
+#     return psycopg2.connect(dsn)
+
+# ---------- 全局连接池 ----------
+
+POOL: SimpleConnectionPool | None = None
+
+
+def init_pool():
+    """
+    初始化全局连接池。
+    在 Docker Compose 里，host 一般写 postgres（service 名），
+    你也可以通过 PG_DSN 环境变量覆盖。
+    """
+    global POOL
+    if POOL is not None:
+        return
+
+    dsn = os.environ.get(
+        "PG_DSN",
+        # 注意：如果 DB Service 也在 Docker 里，这里 host 要写 postgres
+        "dbname=goodsstore user=dncc password=dncc host=localhost port=5432",
+    )
+    logging.info("Initializing DB connection pool with DSN: %s", dsn)
+    POOL = SimpleConnectionPool(minconn=1, maxconn=10, dsn=dsn)
+
 
 def get_connection():
     """
-    简单起见：每个 RPC 新建一个连接。
-    真要上生产可改成连接池，比如 psycopg2.pool.SimpleConnectionPool。
+    从连接池拿一个连接。
     """
-    dsn = os.environ.get(
-        "PG_DSN",
-        "dbname=goodsstore user=dncc password=dncc host=localhost port=5432",
-    )
-    return psycopg2.connect(dsn)
+    if POOL is None:
+        init_pool()
+    return POOL.getconn()
+
+
+def release_connection(conn):
+    """
+    归还连接到连接池。
+    """
+    if POOL is not None:
+        POOL.putconn(conn)
+    else:
+        conn.close()
+
+
 
 
 def row_to_product(row):
@@ -278,15 +325,29 @@ class DbService(db_pb2_grpc.DbServiceServicer):
 
 # ---------- 启动 gRPC Server ----------
 
+
 def serve(port: int = 50051):
+    logging.basicConfig(level=logging.INFO)
+
+    # 先初始化连接池
+    init_pool()
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     db_pb2_grpc.add_DbServiceServicer_to_server(DbService(), server)
     server.add_insecure_port(f"[::]:{port}")
     server.start()
     logging.info("DB gRPC server started on port %d", port)
-    server.wait_for_termination()
+
+    try:
+        server.wait_for_termination()
+    finally:
+        # 进程退出前关掉连接池
+        global POOL
+        if POOL is not None:
+            POOL.closeall()
+            POOL = None
+            logging.info("DB connection pool closed.")
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     serve()

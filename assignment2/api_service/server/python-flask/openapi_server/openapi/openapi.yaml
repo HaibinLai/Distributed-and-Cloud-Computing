@@ -1,0 +1,668 @@
+openapi: 3.0.0
+info:
+  contact:
+    name: CS328 Distributed and Cloud Computing
+    url: https://sustech.edu.cn
+  description: RESTful API for SUSTech Merchandise Store
+  title: SUSTech Merch Store API
+  version: 1.0.0
+servers:
+- description: Development server
+  url: http://localhost:8080/
+paths:
+  /:
+    get:
+      description: Returns a welcome message for the SUSTech Merch Store
+      operationId: get_greeting
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getGreeting_200_response'
+          description: Successful operation
+      summary: Get welcome message
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+  /orders:
+    get:
+      description: Retrieve all orders for the authenticated user
+      operationId: get_user_orders
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+          description: Successful operation
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Get user's orders
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+    post:
+      description: Create a new order for the authenticated user
+      operationId: place_order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+          description: Order created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: "Invalid input (e.g., quantity > 3 or insufficient stock)"
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Place a new order
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+  /orders/{id}:
+    delete:
+      description: Cancel a specific order by ID for the authenticated user
+      operationId: cancel_order
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+          description: Order cancelled successfully
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Order not found
+      security:
+      - bearerAuth: []
+      summary: Cancel order
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+    get:
+      description: Retrieve a specific order by ID for the authenticated user
+      operationId: get_order
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+          description: Successful operation
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Order not found
+      security:
+      - bearerAuth: []
+      summary: Get order by ID
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+  /products:
+    get:
+      description: Retrieve a list of all available products
+      operationId: list_products
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listProducts_200_response'
+          description: Successful operation
+      summary: List all products
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+  /products/{id}:
+    get:
+      description: Retrieve detailed information about a specific product
+      operationId: get_product
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+          description: Successful operation
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Product not found
+      summary: Get product by ID
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+  /users/login:
+    post:
+      description: Authenticate user and return JWT token
+      operationId: login_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: Login successful
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Invalid credentials
+      summary: User login
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+  /users/me:
+    delete:
+      description: Deactivate the authenticated user's account
+      operationId: delete_current_user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+          description: User deleted successfully
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Delete current user account
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+    get:
+      description: Retrieve the authenticated user's profile information
+      operationId: get_current_user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+          description: Successful operation
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Get current user profile
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+    patch:
+      description: Update the authenticated user's profile information
+      operationId: update_current_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+          description: User updated successfully
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Update current user profile
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+  /users/register:
+    post:
+      description: Create a new user account
+      operationId: register_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: User created successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Invalid input
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: User already exists
+      summary: Register a new user
+      x-openapi-router-controller: openapi_server.controllers.default_controller
+components:
+  schemas:
+    Product:
+      example:
+        price: "29.99"
+        name: SUSTech T-Shirt
+        description: Comfortable cotton T-shirt with SUSTech logo
+        created_at: 2024-01-15T10:30:00Z
+        id: 1
+        category: Clothing
+        stock: 100
+        slogan: Wear Your Pride
+      properties:
+        id:
+          example: 1
+          format: int64
+          title: id
+          type: integer
+        name:
+          example: SUSTech T-Shirt
+          title: name
+          type: string
+        description:
+          example: Comfortable cotton T-shirt with SUSTech logo
+          title: description
+          type: string
+        category:
+          example: Clothing
+          title: category
+          type: string
+        price:
+          example: "29.99"
+          format: decimal
+          title: price
+          type: string
+        slogan:
+          example: Wear Your Pride
+          title: slogan
+          type: string
+        stock:
+          example: 100
+          title: stock
+          type: integer
+        created_at:
+          example: 2024-01-15T10:30:00Z
+          format: date-time
+          title: created_at
+          type: string
+      required:
+      - id
+      - name
+      - price
+      - stock
+      title: Product
+      type: object
+    User:
+      example:
+        created_at: 2024-01-15T10:30:00Z
+        id: 1
+        email: john@example.com
+        username: john_doe
+        sid: "12345678"
+      properties:
+        id:
+          example: 1
+          format: int64
+          title: id
+          type: integer
+        username:
+          example: john_doe
+          title: username
+          type: string
+        email:
+          example: john@example.com
+          format: email
+          title: email
+          type: string
+        sid:
+          example: "12345678"
+          title: sid
+          type: string
+        created_at:
+          example: 2024-01-15T10:30:00Z
+          format: date-time
+          title: created_at
+          type: string
+      required:
+      - created_at
+      - id
+      - sid
+      title: User
+      type: object
+    UserRegistration:
+      example:
+        password: securepassword123
+        email: john@example.com
+        sid: "12345678"
+        username: john_doe
+      properties:
+        sid:
+          example: "12345678"
+          title: sid
+          type: string
+        password:
+          example: securepassword123
+          format: password
+          title: password
+          type: string
+        username:
+          example: john_doe
+          nullable: true
+          title: username
+          type: string
+        email:
+          example: john@example.com
+          format: email
+          nullable: true
+          title: email
+          type: string
+      required:
+      - password
+      - sid
+      title: UserRegistration
+      type: object
+    UserLogin:
+      example:
+        password: securepassword123
+        sid: "12345678"
+      properties:
+        sid:
+          example: "12345678"
+          title: sid
+          type: string
+        password:
+          example: securepassword123
+          format: password
+          title: password
+          type: string
+      required:
+      - password
+      - sid
+      title: UserLogin
+      type: object
+    UserUpdate:
+      example:
+        password: newpassword123
+        email: new_email@example.com
+        username: new_username
+      properties:
+        username:
+          example: new_username
+          nullable: true
+          title: username
+          type: string
+        email:
+          example: new_email@example.com
+          format: email
+          nullable: true
+          title: email
+          type: string
+        password:
+          example: newpassword123
+          format: password
+          nullable: true
+          title: password
+          type: string
+      title: UserUpdate
+      type: object
+    Order:
+      properties:
+        id:
+          example: 1
+          format: int64
+          type: integer
+        user_id:
+          example: 1
+          format: int64
+          type: integer
+        product_id:
+          example: 1
+          format: int64
+          type: integer
+        quantity:
+          example: 2
+          maximum: 3
+          minimum: 1
+          type: integer
+        total_price:
+          example: "59.98"
+          format: decimal
+          type: string
+        created_at:
+          example: 2024-01-15T10:30:00Z
+          format: date-time
+          type: string
+      required:
+      - created_at
+      - id
+      - product_id
+      - quantity
+      - total_price
+      - user_id
+      type: object
+    OrderCreate:
+      example:
+        quantity: 2
+        product_id: 1
+      properties:
+        product_id:
+          example: 1
+          format: int64
+          title: product_id
+          type: integer
+        quantity:
+          example: 2
+          maximum: 3
+          minimum: 1
+          title: quantity
+          type: integer
+      required:
+      - product_id
+      - quantity
+      title: OrderCreate
+      type: object
+    SuccessResponse:
+      example:
+        data: "{}"
+        success: true
+        message: Operation completed successfully
+      properties:
+        success:
+          example: true
+          title: success
+          type: boolean
+        message:
+          example: Operation completed successfully
+          title: message
+          type: string
+        data:
+          nullable: true
+          title: data
+          type: object
+      title: SuccessResponse
+      type: object
+    ErrorResponse:
+      example:
+        code: 401
+        success: false
+        error: Invalid credentials
+      properties:
+        success:
+          example: false
+          title: success
+          type: boolean
+        error:
+          example: Invalid credentials
+          title: error
+          type: string
+        code:
+          example: 401
+          title: code
+          type: integer
+      title: ErrorResponse
+      type: object
+    AuthResponse:
+      example:
+        data:
+          user:
+            created_at: 2024-01-15T10:30:00Z
+            id: 1
+            email: john@example.com
+            username: john_doe
+            sid: "12345678"
+          token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        success: true
+        message: Login successful
+      properties:
+        success:
+          example: true
+          title: success
+          type: boolean
+        message:
+          example: Login successful
+          title: message
+          type: string
+        data:
+          $ref: '#/components/schemas/AuthResponse_data'
+      title: AuthResponse
+      type: object
+    getGreeting_200_response:
+      example:
+        message: Welcome to SUSTech Merch Store!
+      properties:
+        message:
+          example: Welcome to SUSTech Merch Store!
+          title: message
+          type: string
+      title: getGreeting_200_response
+      type: object
+    listProducts_200_response:
+      example:
+        data:
+        - price: "29.99"
+          name: SUSTech T-Shirt
+          description: Comfortable cotton T-shirt with SUSTech logo
+          created_at: 2024-01-15T10:30:00Z
+          id: 1
+          category: Clothing
+          stock: 100
+          slogan: Wear Your Pride
+        - price: "29.99"
+          name: SUSTech T-Shirt
+          description: Comfortable cotton T-shirt with SUSTech logo
+          created_at: 2024-01-15T10:30:00Z
+          id: 1
+          category: Clothing
+          stock: 100
+          slogan: Wear Your Pride
+        success: true
+      properties:
+        success:
+          example: true
+          title: success
+          type: boolean
+        data:
+          items:
+            $ref: '#/components/schemas/Product'
+          title: data
+          type: array
+      title: listProducts_200_response
+      type: object
+    AuthResponse_data:
+      example:
+        user:
+          created_at: 2024-01-15T10:30:00Z
+          id: 1
+          email: john@example.com
+          username: john_doe
+          sid: "12345678"
+        token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+          title: token
+          type: string
+      title: AuthResponse_data
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+      x-bearerInfoFunc: openapi_server.controllers.security_controller.info_from_bearerAuth

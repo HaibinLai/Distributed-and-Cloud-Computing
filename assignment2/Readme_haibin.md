@@ -14,6 +14,8 @@ SUSTech_Merch_Store/
 └── init.sql                    # 数据库初始化脚本
 ```
 
+
+```
 ┌─────────────────────────────┐
 │       前端 / 客户端         │
 │   (用户浏览器 / curl / app) │
@@ -37,6 +39,7 @@ SUSTech_Merch_Store/
 ┌─────────────────────────────┐
 │   PostgreSQL + Kafka 等基础设施 │
 └─────────────────────────────┘
+```
 
 
 🔁 总体执行流程（从请求到数据库）
@@ -58,3 +61,8 @@ DB Service 收到请求 → 扣库存 → 写数据库 → 返回结果。
 API Service 收到 gRPC 返回 → 转成 JSON → 回复给浏览器。
 
 同时 API Service 把日志写入 Logging Service → Logging Service 发往 Kafka。
+
+
+```
+PYTHONPATH=src uvicorn openapi_server.main:app --host 0.0.0.0
+```

@@ -80,13 +80,13 @@ services:
 
   ##### YOUR SERVICES GO BELOW THIS LINE #####
 
-  # db_service:
-  #   build: ./src/db_service      # 根据你的真实路径改
-  #   container_name: db_service
-  #   depends_on:
-  #     - postgres
-  #   environment:
-  #     POSTGRES_DSN: "dbname=goodsstore user=dncc password=dncc host=postgres port=5432"
+  db_service:
+    build: ./src/db_service      # 根据你的真实路径改
+    container_name: db_service
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_DSN: "dbname=goodsstore user=dncc password=dncc host=postgres port=5432"
 
   api_service:
       build: ./src/api_service/server/python-flask/  # 你 Flask 代码所在目录

@@ -41,12 +41,12 @@ def init_pool():
     if POOL is not None:
         return
 
-    dsn = os.environ.get(
-        "PG_DSN",
-        # 注意：如果 DB Service 也在 Docker 里，这里 host 要写 postgres
-        "dbname=goodsstore user=dncc password=dncc host=localhost port=5432",
-    )
-    logging.info("Initializing DB connection pool with DSN: %s", dsn)
+    dsn = os.environ.get("POSTGRES_DSN")
+    if not dsn:
+        # 没传 env，就用默认的 *postgres*，千万不要 localhost
+        dsn = "dbname=goodsstore user=dncc password=dncc host=postgres port=5432"
+
+    logging.info(f"Initializing DB connection pool with DSN: {dsn}")
     POOL = SimpleConnectionPool(minconn=1, maxconn=10, dsn=dsn)
 
 

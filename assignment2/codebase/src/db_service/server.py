@@ -103,6 +103,22 @@ def row_to_user(row):
     return u
 
 
+# // id, sid, username, password_hash, created_at
+def row_to_user2(row):
+    u = db_pb2.User()
+    u.id = row[0]
+    u.sid = row[1]
+    u.username = row[2]
+    u.email = row[3] or ""
+    u.password_hash = row[4]
+    if row[5] is not None:
+        ts = Timestamp()
+        ts.FromDatetime(row[5].replace(tzinfo=timezone.utc))
+        u.created_at.CopyFrom(ts)
+    return u
+
+
+
 def row_to_order(row):
     o = db_pb2.Order()
     o.id = row[0]
@@ -120,6 +136,19 @@ def row_to_order(row):
 # ---------- gRPC Service 实现 ----------
 
 class DbService(db_pb2_grpc.DbServiceServicer):
+
+    def _row_to_user(row):
+        u = db_pb2.User()
+        u.id = row[0]
+        u.sid = row[1]
+        u.username = row[2]
+        u.email = row[3] or ""
+        u.password_hash = row[4]
+        if row[5] is not None:
+            ts = Timestamp()
+            ts.FromDatetime(row[5].replace(tzinfo=timezone.utc))
+            u.created_at.CopyFrom(ts)
+        return u
 
     # ---- Products ----
     def CreateProduct(self, request, context):
@@ -146,7 +175,7 @@ class DbService(db_pb2_grpc.DbServiceServicer):
                     row = cur.fetchone()
                     return row_to_product(row)
         finally:
-            conn.close()
+            release_connection(conn)
 
     def ListProducts(self, request, context):
         conn = get_connection()
@@ -188,7 +217,7 @@ class DbService(db_pb2_grpc.DbServiceServicer):
                 total_count=total_count,
             )
         finally:
-            conn.close()
+            release_connection(conn)
 
     def GetProduct(self, request, context):
         """
@@ -212,8 +241,7 @@ class DbService(db_pb2_grpc.DbServiceServicer):
                         context.abort(grpc.StatusCode.NOT_FOUND, "product not found")
                     return row_to_product(row)
         finally:
-            conn.close()
-
+            release_connection(conn)
 
     # ---- Users ----
     def CreateUser(self, request, context):
@@ -237,7 +265,38 @@ class DbService(db_pb2_grpc.DbServiceServicer):
                     row = cur.fetchone()
                     return row_to_user(row)
         finally:
-            conn.close()
+            release_connection(conn)
+
+    def GetUserBySid(self, request, context):
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT id, sid, username, email, password_hash, created_at
+                        FROM users
+                        WHERE sid = %s
+                        """,
+                        (request.sid,),
+                    )
+                    row = cur.fetchone()
+
+                    if row is None:
+                        context.set_code(grpc.StatusCode.NOT_FOUND)
+                        context.set_details(f"user with sid={request.sid} not found")
+                        # 返回一个空的响应即可，不要去 row_to_user(None)
+                        return None
+
+                    # 把 row 转成 User proto
+                    user_msg = row_to_user2(row)
+                    # 再包装进 Response 里返回
+                    return user_msg
+        finally:
+            release_connection(conn)
+
+
+
 
     # ---- Orders ----
     def CreateOrder(self, request, context):
@@ -304,7 +363,7 @@ class DbService(db_pb2_grpc.DbServiceServicer):
 
                     return row_to_order(order_row)
         finally:
-            conn.close()
+            release_connection(conn)
 
     def ListOrdersByUser(self, request, context):
         conn = get_connection()
@@ -345,7 +404,7 @@ class DbService(db_pb2_grpc.DbServiceServicer):
                 total_count=total_count,
             )
         finally:
-            conn.close()
+            release_connection(conn)
 
 
 # ---------- 启动 gRPC Server ----------

@@ -249,20 +249,26 @@ class DbService(db_pb2_grpc.DbServiceServicer):
         try:
             with conn:
                 with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        INSERT INTO users (sid, username, email, password_hash)
-                        VALUES (%s, %s, %s, %s)
-                        RETURNING id, sid, username, email, password_hash, created_at
-                        """,
-                        (
-                            request.sid,
-                            request.username,
-                            request.email,
-                            request.password_hash,
-                        ),
-                    )
-                    row = cur.fetchone()
+                    # 如果这里已经有现成的user了，会抛 UniqueViolation 异常
+                    try:
+                        cur.execute(
+                            """
+                            INSERT INTO users (sid, username, email, password_hash)
+                            VALUES (%s, %s, %s, %s)
+                            RETURNING id, sid, username, email, password_hash, created_at
+                            """,
+                            (
+                                request.sid,
+                                request.username,
+                                request.email,
+                                request.password_hash,
+                            ),
+                        )
+                        row = cur.fetchone()
+                    except psycopg2.IntegrityError as e:
+                        context.abort(grpc.StatusCode.ALREADY_EXISTS, "user with this SID already exists")
+                    
+
                     return row_to_user(row)
         finally:
             release_connection(conn)

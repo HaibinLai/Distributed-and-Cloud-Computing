@@ -318,6 +318,7 @@ class DbService(db_pb2_grpc.DbServiceServicer):
             with conn:
                 with conn.cursor() as cur:
                     # 用 id 作为主键进行更新
+                    # 如果找不到user，返回 NOT_FOUND
                     cur.execute(
                         """
                         UPDATE users

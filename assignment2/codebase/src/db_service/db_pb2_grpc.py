@@ -4,6 +4,7 @@ import grpc
 import warnings
 
 import db_pb2 as db__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
@@ -26,7 +27,11 @@ if _version_not_supported:
 
 
 class DbServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """========================
+    DbService 定义
+    ========================
+
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -34,63 +39,108 @@ class DbServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.ListProducts = channel.unary_unary(
-                '/db.DbService/ListProducts',
-                request_serializer=db__pb2.Empty.SerializeToString,
-                response_deserializer=db__pb2.ListProductsResp.FromString,
-                _registered_method=True)
-        self.GetProduct = channel.unary_unary(
-                '/db.DbService/GetProduct',
-                request_serializer=db__pb2.ProductId.SerializeToString,
+        self.CreateProduct = channel.unary_unary(
+                '/sustech.store.db.DbService/CreateProduct',
+                request_serializer=db__pb2.CreateProductRequest.SerializeToString,
                 response_deserializer=db__pb2.Product.FromString,
                 _registered_method=True)
+        self.GetProduct = channel.unary_unary(
+                '/sustech.store.db.DbService/GetProduct',
+                request_serializer=db__pb2.GetProductRequest.SerializeToString,
+                response_deserializer=db__pb2.Product.FromString,
+                _registered_method=True)
+        self.ListProducts = channel.unary_unary(
+                '/sustech.store.db.DbService/ListProducts',
+                request_serializer=db__pb2.ListProductsRequest.SerializeToString,
+                response_deserializer=db__pb2.ListProductsResponse.FromString,
+                _registered_method=True)
+        self.UpdateProduct = channel.unary_unary(
+                '/sustech.store.db.DbService/UpdateProduct',
+                request_serializer=db__pb2.UpdateProductRequest.SerializeToString,
+                response_deserializer=db__pb2.Product.FromString,
+                _registered_method=True)
+        self.DeleteProduct = channel.unary_unary(
+                '/sustech.store.db.DbService/DeleteProduct',
+                request_serializer=db__pb2.DeleteProductRequest.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                _registered_method=True)
         self.CreateUser = channel.unary_unary(
-                '/db.DbService/CreateUser',
-                request_serializer=db__pb2.CreateUserReq.SerializeToString,
+                '/sustech.store.db.DbService/CreateUser',
+                request_serializer=db__pb2.CreateUserRequest.SerializeToString,
                 response_deserializer=db__pb2.User.FromString,
                 _registered_method=True)
-        self.GetUser = channel.unary_unary(
-                '/db.DbService/GetUser',
-                request_serializer=db__pb2.UserId.SerializeToString,
+        self.GetUserById = channel.unary_unary(
+                '/sustech.store.db.DbService/GetUserById',
+                request_serializer=db__pb2.GetUserByIdRequest.SerializeToString,
                 response_deserializer=db__pb2.User.FromString,
                 _registered_method=True)
-        self.GetUserByName = channel.unary_unary(
-                '/db.DbService/GetUserByName',
-                request_serializer=db__pb2.GetUserByNameReq.SerializeToString,
+        self.GetUserBySid = channel.unary_unary(
+                '/sustech.store.db.DbService/GetUserBySid',
+                request_serializer=db__pb2.GetUserBySidRequest.SerializeToString,
                 response_deserializer=db__pb2.User.FromString,
+                _registered_method=True)
+        self.GetUserByUsername = channel.unary_unary(
+                '/sustech.store.db.DbService/GetUserByUsername',
+                request_serializer=db__pb2.GetUserByUsernameRequest.SerializeToString,
+                response_deserializer=db__pb2.User.FromString,
+                _registered_method=True)
+        self.ListUsers = channel.unary_unary(
+                '/sustech.store.db.DbService/ListUsers',
+                request_serializer=db__pb2.ListUsersRequest.SerializeToString,
+                response_deserializer=db__pb2.ListUsersResponse.FromString,
                 _registered_method=True)
         self.UpdateUser = channel.unary_unary(
-                '/db.DbService/UpdateUser',
-                request_serializer=db__pb2.UpdateUserReq.SerializeToString,
+                '/sustech.store.db.DbService/UpdateUser',
+                request_serializer=db__pb2.UpdateUserRequest.SerializeToString,
                 response_deserializer=db__pb2.User.FromString,
                 _registered_method=True)
-        self.DeactivateUser = channel.unary_unary(
-                '/db.DbService/DeactivateUser',
-                request_serializer=db__pb2.DeactivateUserReq.SerializeToString,
-                response_deserializer=db__pb2.User.FromString,
+        self.DeleteUser = channel.unary_unary(
+                '/sustech.store.db.DbService/DeleteUser',
+                request_serializer=db__pb2.DeleteUserRequest.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 _registered_method=True)
-        self.PlaceOrder = channel.unary_unary(
-                '/db.DbService/PlaceOrder',
-                request_serializer=db__pb2.PlaceOrderReq.SerializeToString,
+        self.CreateOrder = channel.unary_unary(
+                '/sustech.store.db.DbService/CreateOrder',
+                request_serializer=db__pb2.CreateOrderRequest.SerializeToString,
                 response_deserializer=db__pb2.Order.FromString,
                 _registered_method=True)
         self.GetOrder = channel.unary_unary(
-                '/db.DbService/GetOrder',
-                request_serializer=db__pb2.OrderId.SerializeToString,
+                '/sustech.store.db.DbService/GetOrder',
+                request_serializer=db__pb2.GetOrderRequest.SerializeToString,
                 response_deserializer=db__pb2.Order.FromString,
                 _registered_method=True)
-        self.CancelOrder = channel.unary_unary(
-                '/db.DbService/CancelOrder',
-                request_serializer=db__pb2.OrderId.SerializeToString,
+        self.ListOrders = channel.unary_unary(
+                '/sustech.store.db.DbService/ListOrders',
+                request_serializer=db__pb2.ListOrdersRequest.SerializeToString,
+                response_deserializer=db__pb2.ListOrdersResponse.FromString,
+                _registered_method=True)
+        self.ListOrdersByUser = channel.unary_unary(
+                '/sustech.store.db.DbService/ListOrdersByUser',
+                request_serializer=db__pb2.ListOrdersByUserRequest.SerializeToString,
+                response_deserializer=db__pb2.ListOrdersResponse.FromString,
+                _registered_method=True)
+        self.UpdateOrder = channel.unary_unary(
+                '/sustech.store.db.DbService/UpdateOrder',
+                request_serializer=db__pb2.UpdateOrderRequest.SerializeToString,
                 response_deserializer=db__pb2.Order.FromString,
+                _registered_method=True)
+        self.DeleteOrder = channel.unary_unary(
+                '/sustech.store.db.DbService/DeleteOrder',
+                request_serializer=db__pb2.DeleteOrderRequest.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 _registered_method=True)
 
 
 class DbServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """========================
+    DbService 定义
+    ========================
 
-    def ListProducts(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+    """
+
+    def CreateProduct(self, request, context):
+        """Products
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -101,21 +151,51 @@ class DbServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ListProducts(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateProduct(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteProduct(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def CreateUser(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetUser(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetUserByName(self, request, context):
-        """用于登录
+        """Users
         """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUserById(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUserBySid(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUserByUsername(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListUsers(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -126,14 +206,15 @@ class DbServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def DeactivateUser(self, request, context):
+    def DeleteUser(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def PlaceOrder(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+    def CreateOrder(self, request, context):
+        """Orders
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -144,7 +225,25 @@ class DbServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def CancelOrder(self, request, context):
+    def ListOrders(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListOrdersByUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateOrder(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteOrder(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -153,69 +252,113 @@ class DbServiceServicer(object):
 
 def add_DbServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'ListProducts': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListProducts,
-                    request_deserializer=db__pb2.Empty.FromString,
-                    response_serializer=db__pb2.ListProductsResp.SerializeToString,
+            'CreateProduct': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateProduct,
+                    request_deserializer=db__pb2.CreateProductRequest.FromString,
+                    response_serializer=db__pb2.Product.SerializeToString,
             ),
             'GetProduct': grpc.unary_unary_rpc_method_handler(
                     servicer.GetProduct,
-                    request_deserializer=db__pb2.ProductId.FromString,
+                    request_deserializer=db__pb2.GetProductRequest.FromString,
                     response_serializer=db__pb2.Product.SerializeToString,
+            ),
+            'ListProducts': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListProducts,
+                    request_deserializer=db__pb2.ListProductsRequest.FromString,
+                    response_serializer=db__pb2.ListProductsResponse.SerializeToString,
+            ),
+            'UpdateProduct': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateProduct,
+                    request_deserializer=db__pb2.UpdateProductRequest.FromString,
+                    response_serializer=db__pb2.Product.SerializeToString,
+            ),
+            'DeleteProduct': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteProduct,
+                    request_deserializer=db__pb2.DeleteProductRequest.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
             'CreateUser': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateUser,
-                    request_deserializer=db__pb2.CreateUserReq.FromString,
+                    request_deserializer=db__pb2.CreateUserRequest.FromString,
                     response_serializer=db__pb2.User.SerializeToString,
             ),
-            'GetUser': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetUser,
-                    request_deserializer=db__pb2.UserId.FromString,
+            'GetUserById': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserById,
+                    request_deserializer=db__pb2.GetUserByIdRequest.FromString,
                     response_serializer=db__pb2.User.SerializeToString,
             ),
-            'GetUserByName': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetUserByName,
-                    request_deserializer=db__pb2.GetUserByNameReq.FromString,
+            'GetUserBySid': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserBySid,
+                    request_deserializer=db__pb2.GetUserBySidRequest.FromString,
                     response_serializer=db__pb2.User.SerializeToString,
+            ),
+            'GetUserByUsername': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserByUsername,
+                    request_deserializer=db__pb2.GetUserByUsernameRequest.FromString,
+                    response_serializer=db__pb2.User.SerializeToString,
+            ),
+            'ListUsers': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListUsers,
+                    request_deserializer=db__pb2.ListUsersRequest.FromString,
+                    response_serializer=db__pb2.ListUsersResponse.SerializeToString,
             ),
             'UpdateUser': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateUser,
-                    request_deserializer=db__pb2.UpdateUserReq.FromString,
+                    request_deserializer=db__pb2.UpdateUserRequest.FromString,
                     response_serializer=db__pb2.User.SerializeToString,
             ),
-            'DeactivateUser': grpc.unary_unary_rpc_method_handler(
-                    servicer.DeactivateUser,
-                    request_deserializer=db__pb2.DeactivateUserReq.FromString,
-                    response_serializer=db__pb2.User.SerializeToString,
+            'DeleteUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteUser,
+                    request_deserializer=db__pb2.DeleteUserRequest.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
-            'PlaceOrder': grpc.unary_unary_rpc_method_handler(
-                    servicer.PlaceOrder,
-                    request_deserializer=db__pb2.PlaceOrderReq.FromString,
+            'CreateOrder': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateOrder,
+                    request_deserializer=db__pb2.CreateOrderRequest.FromString,
                     response_serializer=db__pb2.Order.SerializeToString,
             ),
             'GetOrder': grpc.unary_unary_rpc_method_handler(
                     servicer.GetOrder,
-                    request_deserializer=db__pb2.OrderId.FromString,
+                    request_deserializer=db__pb2.GetOrderRequest.FromString,
                     response_serializer=db__pb2.Order.SerializeToString,
             ),
-            'CancelOrder': grpc.unary_unary_rpc_method_handler(
-                    servicer.CancelOrder,
-                    request_deserializer=db__pb2.OrderId.FromString,
+            'ListOrders': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListOrders,
+                    request_deserializer=db__pb2.ListOrdersRequest.FromString,
+                    response_serializer=db__pb2.ListOrdersResponse.SerializeToString,
+            ),
+            'ListOrdersByUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListOrdersByUser,
+                    request_deserializer=db__pb2.ListOrdersByUserRequest.FromString,
+                    response_serializer=db__pb2.ListOrdersResponse.SerializeToString,
+            ),
+            'UpdateOrder': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateOrder,
+                    request_deserializer=db__pb2.UpdateOrderRequest.FromString,
                     response_serializer=db__pb2.Order.SerializeToString,
+            ),
+            'DeleteOrder': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteOrder,
+                    request_deserializer=db__pb2.DeleteOrderRequest.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'db.DbService', rpc_method_handlers)
+            'sustech.store.db.DbService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('db.DbService', rpc_method_handlers)
+    server.add_registered_method_handlers('sustech.store.db.DbService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class DbService(object):
-    """Missing associated documentation comment in .proto file."""
+    """========================
+    DbService 定义
+    ========================
+
+    """
 
     @staticmethod
-    def ListProducts(request,
+    def CreateProduct(request,
             target,
             options=(),
             channel_credentials=None,
@@ -228,9 +371,9 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/ListProducts',
-            db__pb2.Empty.SerializeToString,
-            db__pb2.ListProductsResp.FromString,
+            '/sustech.store.db.DbService/CreateProduct',
+            db__pb2.CreateProductRequest.SerializeToString,
+            db__pb2.Product.FromString,
             options,
             channel_credentials,
             insecure,
@@ -255,9 +398,90 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/GetProduct',
-            db__pb2.ProductId.SerializeToString,
+            '/sustech.store.db.DbService/GetProduct',
+            db__pb2.GetProductRequest.SerializeToString,
             db__pb2.Product.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListProducts(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sustech.store.db.DbService/ListProducts',
+            db__pb2.ListProductsRequest.SerializeToString,
+            db__pb2.ListProductsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateProduct(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sustech.store.db.DbService/UpdateProduct',
+            db__pb2.UpdateProductRequest.SerializeToString,
+            db__pb2.Product.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteProduct(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sustech.store.db.DbService/DeleteProduct',
+            db__pb2.DeleteProductRequest.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,
@@ -282,8 +506,8 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/CreateUser',
-            db__pb2.CreateUserReq.SerializeToString,
+            '/sustech.store.db.DbService/CreateUser',
+            db__pb2.CreateUserRequest.SerializeToString,
             db__pb2.User.FromString,
             options,
             channel_credentials,
@@ -296,7 +520,7 @@ class DbService(object):
             _registered_method=True)
 
     @staticmethod
-    def GetUser(request,
+    def GetUserById(request,
             target,
             options=(),
             channel_credentials=None,
@@ -309,8 +533,8 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/GetUser',
-            db__pb2.UserId.SerializeToString,
+            '/sustech.store.db.DbService/GetUserById',
+            db__pb2.GetUserByIdRequest.SerializeToString,
             db__pb2.User.FromString,
             options,
             channel_credentials,
@@ -323,7 +547,7 @@ class DbService(object):
             _registered_method=True)
 
     @staticmethod
-    def GetUserByName(request,
+    def GetUserBySid(request,
             target,
             options=(),
             channel_credentials=None,
@@ -336,9 +560,63 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/GetUserByName',
-            db__pb2.GetUserByNameReq.SerializeToString,
+            '/sustech.store.db.DbService/GetUserBySid',
+            db__pb2.GetUserBySidRequest.SerializeToString,
             db__pb2.User.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUserByUsername(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sustech.store.db.DbService/GetUserByUsername',
+            db__pb2.GetUserByUsernameRequest.SerializeToString,
+            db__pb2.User.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListUsers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sustech.store.db.DbService/ListUsers',
+            db__pb2.ListUsersRequest.SerializeToString,
+            db__pb2.ListUsersResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -363,8 +641,8 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/UpdateUser',
-            db__pb2.UpdateUserReq.SerializeToString,
+            '/sustech.store.db.DbService/UpdateUser',
+            db__pb2.UpdateUserRequest.SerializeToString,
             db__pb2.User.FromString,
             options,
             channel_credentials,
@@ -377,7 +655,7 @@ class DbService(object):
             _registered_method=True)
 
     @staticmethod
-    def DeactivateUser(request,
+    def DeleteUser(request,
             target,
             options=(),
             channel_credentials=None,
@@ -390,9 +668,9 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/DeactivateUser',
-            db__pb2.DeactivateUserReq.SerializeToString,
-            db__pb2.User.FromString,
+            '/sustech.store.db.DbService/DeleteUser',
+            db__pb2.DeleteUserRequest.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,
@@ -404,7 +682,7 @@ class DbService(object):
             _registered_method=True)
 
     @staticmethod
-    def PlaceOrder(request,
+    def CreateOrder(request,
             target,
             options=(),
             channel_credentials=None,
@@ -417,8 +695,8 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/PlaceOrder',
-            db__pb2.PlaceOrderReq.SerializeToString,
+            '/sustech.store.db.DbService/CreateOrder',
+            db__pb2.CreateOrderRequest.SerializeToString,
             db__pb2.Order.FromString,
             options,
             channel_credentials,
@@ -444,8 +722,8 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/GetOrder',
-            db__pb2.OrderId.SerializeToString,
+            '/sustech.store.db.DbService/GetOrder',
+            db__pb2.GetOrderRequest.SerializeToString,
             db__pb2.Order.FromString,
             options,
             channel_credentials,
@@ -458,7 +736,7 @@ class DbService(object):
             _registered_method=True)
 
     @staticmethod
-    def CancelOrder(request,
+    def ListOrders(request,
             target,
             options=(),
             channel_credentials=None,
@@ -471,9 +749,90 @@ class DbService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/db.DbService/CancelOrder',
-            db__pb2.OrderId.SerializeToString,
+            '/sustech.store.db.DbService/ListOrders',
+            db__pb2.ListOrdersRequest.SerializeToString,
+            db__pb2.ListOrdersResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListOrdersByUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sustech.store.db.DbService/ListOrdersByUser',
+            db__pb2.ListOrdersByUserRequest.SerializeToString,
+            db__pb2.ListOrdersResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateOrder(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sustech.store.db.DbService/UpdateOrder',
+            db__pb2.UpdateOrderRequest.SerializeToString,
             db__pb2.Order.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteOrder(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/sustech.store.db.DbService/DeleteOrder',
+            db__pb2.DeleteOrderRequest.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,

@@ -1,60 +1,208 @@
 syntax = "proto3";
-package db;
 
-message Empty {}
+package sustech.store.db;
 
-message ProductId { int32 id = 1; }
-message UserId    { int32 id = 1; }
-message OrderId   { int32 id = 1; }
+option go_package = "sustech/store/dbpb";
+option java_multiple_files = true;
+option java_package = "com.sustech.store.db";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// ========================
+// Message 定义
+// ========================
 
 message Product {
   int32 id = 1;
   string name = 2;
-  string category = 3;
-  float price = 4;
-  int32 stock = 5;
+  string description = 3;
+  string category = 4;
+  double price = 5;                // 简化：直接用 double 表示 DECIMAL(10,2)
+  string slogan = 6;
+  int32 stock = 7;
+  google.protobuf.Timestamp created_at = 8;
 }
 
-message ListProductsResp { repeated Product products = 1; }
-
-message CreateUserReq { string username = 1; string password_hash = 2; }
 message User {
   int32 id = 1;
-  string username = 2;
-  bool active = 3;
-  // 不返回 password_hash 给 API
+  string sid = 2;
+  string username = 3;
+  string email = 4;
+  string password_hash = 5;        // 建议只在内部使用，勿直接暴露给前端
+  google.protobuf.Timestamp created_at = 6;
 }
-message GetUserByNameReq { string username = 1; }
 
-message UpdateUserReq { int32 id = 1; string username = 2; }
-message DeactivateUserReq { int32 id = 1; }
-
-message PlaceOrderReq {
-  int32 user_id = 1;
-  int32 product_id = 2;
-  int32 quantity = 3; // <=3
-}
-enum OrderStatus { PLACED = 0; CANCELED = 1; }
 message Order {
   int32 id = 1;
   int32 user_id = 2;
   int32 product_id = 3;
   int32 quantity = 4;
-  float total_price = 5;
-  OrderStatus status = 6;
+  double total_price = 5;          // 同上，简化为 double
+  google.protobuf.Timestamp created_at = 6;
 }
 
+// ========================
+// Products: CRUD 请求/响应
+// ========================
+
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  string category = 3;
+  double price = 4;
+  string slogan = 5;
+  int32 stock = 6;                 // 不传时可由服务端默认 500
+}
+
+message GetProductRequest {
+  int32 id = 1;
+}
+
+message ListProductsRequest {
+  string category = 1;             // 可选，按类别过滤
+  int32 page = 2;                  // 从 1 开始
+  int32 page_size = 3;             // 每页数量
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  int32 total_count = 4;
+}
+
+message UpdateProductRequest {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+  double price = 5;
+  string slogan = 6;
+  int32 stock = 7;
+  // 简化：要求客户端传完整的新状态。要做部分更新可以改为 optional 或用 wrappers。
+}
+
+message DeleteProductRequest {
+  int32 id = 1;
+}
+
+// ========================
+// Users: CRUD 请求/响应
+// ========================
+
+message CreateUserRequest {
+  string sid = 1;
+  string username = 2;
+  string email = 3;
+  string password_hash = 4;
+}
+
+message GetUserByIdRequest {
+  int32 id = 1;
+}
+
+message GetUserBySidRequest {
+  string sid = 1;
+}
+
+message GetUserByUsernameRequest {
+  string username = 1;
+}
+
+message ListUsersRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  int32 total_count = 4;
+}
+
+message UpdateUserRequest {
+  int32 id = 1;
+  string sid = 2;
+  string username = 3;
+  string email = 4;
+  string password_hash = 5;
+}
+
+message DeleteUserRequest {
+  int32 id = 1;
+}
+
+// ========================
+// Orders: CRUD 请求/响应
+// ========================
+
+message CreateOrderRequest {
+  int32 user_id = 1;
+  int32 product_id = 2;
+  int32 quantity = 3;
+  // total_price 建议由服务端按 product.price * quantity 计算，客户端不要传
+}
+
+message GetOrderRequest {
+  int32 id = 1;
+}
+
+message ListOrdersRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListOrdersByUserRequest {
+  int32 user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  int32 total_count = 4;
+}
+
+message UpdateOrderRequest {
+  int32 id = 1;
+  int32 quantity = 2;
+  // 简化：只允许修改数量，user_id / product_id 不建议改
+}
+
+message DeleteOrderRequest {
+  int32 id = 1;
+}
+
+// ========================
+// DbService 定义
+// ========================
+
 service DbService {
-  rpc ListProducts(Empty) returns (ListProductsResp);
-  rpc GetProduct(ProductId) returns (Product);
+  // Products
+  rpc CreateProduct(CreateProductRequest) returns (Product);
+  rpc GetProduct(GetProductRequest) returns (Product);
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+  rpc UpdateProduct(UpdateProductRequest) returns (Product);
+  rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty);
 
-  rpc CreateUser(CreateUserReq) returns (User);
-  rpc GetUser(UserId) returns (User);
-  rpc GetUserByName(GetUserByNameReq) returns (User); // 用于登录
-  rpc UpdateUser(UpdateUserReq) returns (User);
-  rpc DeactivateUser(DeactivateUserReq) returns (User);
+  // Users
+  rpc CreateUser(CreateUserRequest) returns (User);
+  rpc GetUserById(GetUserByIdRequest) returns (User);
+  rpc GetUserBySid(GetUserBySidRequest) returns (User);
+  rpc GetUserByUsername(GetUserByUsernameRequest) returns (User);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (User);
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty);
 
-  rpc PlaceOrder(PlaceOrderReq) returns (Order);
-  rpc GetOrder(OrderId) returns (Order);
-  rpc CancelOrder(OrderId) returns (Order);
+  // Orders
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+  rpc ListOrdersByUser(ListOrdersByUserRequest) returns (ListOrdersResponse);
+  rpc UpdateOrder(UpdateOrderRequest) returns (Order);
+  rpc DeleteOrder(DeleteOrderRequest) returns (google.protobuf.Empty);
 }

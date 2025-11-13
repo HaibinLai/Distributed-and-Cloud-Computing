@@ -1,56 +1,292 @@
-import grpc, time
-from concurrent.futures import ThreadPoolExecutor
+import os
+import logging
+from concurrent import futures
+from datetime import timezone
+
+import grpc
 import psycopg2
-from pool import conn, put
-import db_pb2, db_pb2_grpc
-from grpc import StatusCode
+from google.protobuf.timestamp_pb2 import Timestamp
 
-class DbImpl(db_pb2_grpc.DbServiceServicer):
+import db_pb2
+import db_pb2_grpc
+
+# ---------- 数据库工具 ----------
+
+def get_connection():
+    """
+    简单起见：每个 RPC 新建一个连接。
+    真要上生产可改成连接池，比如 psycopg2.pool.SimpleConnectionPool。
+    """
+    dsn = os.environ.get(
+        "PG_DSN",
+        "dbname=goodsstore user=dncc password=dncc host=localhost port=5432",
+    )
+    return psycopg2.connect(dsn)
+
+
+def row_to_product(row):
+    # row 顺序必须和 SQL SELECT 的字段顺序一致
+    p = db_pb2.Product()
+    p.id = row[0]
+    p.name = row[1]
+    p.description = row[2] or ""
+    p.category = row[3] or ""
+    p.price = float(row[4])
+    p.slogan = row[5] or ""
+    p.stock = row[6]
+    if row[7] is not None:
+        ts = Timestamp()
+        # 这里简单认为是 UTC（如果你的 DB 是本地时间，可以根据需要调整）
+        ts.FromDatetime(row[7].replace(tzinfo=timezone.utc))
+        p.created_at.CopyFrom(ts)
+    return p
+
+
+def row_to_user(row):
+    u = db_pb2.User()
+    u.id = row[0]
+    u.sid = row[1]
+    u.username = row[2]
+    u.email = row[3] or ""
+    u.password_hash = row[4]
+    if row[5] is not None:
+        ts = Timestamp()
+        ts.FromDatetime(row[5].replace(tzinfo=timezone.utc))
+        u.created_at.CopyFrom(ts)
+    return u
+
+
+def row_to_order(row):
+    o = db_pb2.Order()
+    o.id = row[0]
+    o.user_id = row[1]
+    o.product_id = row[2]
+    o.quantity = row[3]
+    o.total_price = float(row[4])
+    if row[5] is not None:
+        ts = Timestamp()
+        ts.FromDatetime(row[5].replace(tzinfo=timezone.utc))
+        o.created_at.CopyFrom(ts)
+    return o
+
+
+# ---------- gRPC Service 实现 ----------
+
+class DbService(db_pb2_grpc.DbServiceServicer):
+
+    # ---- Products ----
+    def CreateProduct(self, request, context):
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO products
+                          (name, description, category, price, slogan, stock)
+                        VALUES (%s, %s, %s, %s, %s, COALESCE(%s, 500))
+                        RETURNING id, name, description, category, price, slogan, stock, created_at
+                        """,
+                        (
+                            request.name,
+                            request.description,
+                            request.category,
+                            request.price,
+                            request.slogan,
+                            request.stock if request.stock != 0 else None,
+                        ),
+                    )
+                    row = cur.fetchone()
+                    return row_to_product(row)
+        finally:
+            conn.close()
+
     def ListProducts(self, request, context):
-        c = conn(); cur = c.cursor()
+        conn = get_connection()
         try:
-            cur.execute("SELECT id,name,category,price,stock FROM products ORDER BY id")
-            rows = cur.fetchall()
-            return db_pb2.ListProductsResp(products=[db_pb2.Product(id=r[0],name=r[1],category=r[2],price=float(r[3]),stock=r[4]) for r in rows])
-        finally:
-            c.rollback(); put(c)
+            with conn:
+                with conn.cursor() as cur:
+                    params = []
+                    where = ""
+                    if request.category:
+                        where = "WHERE category = %s"
+                        params.append(request.category)
 
-    def PlaceOrder(self, req, context):
-        c = conn(); cur = c.cursor()
-        try:
-            if req.quantity < 1 or req.quantity > 3:
-                context.set_code(StatusCode.INVALID_ARGUMENT)
-                context.set_details("quantity must be 1..3")
-                return db_pb2.Order()
-            cur.execute("SELECT price, stock FROM products WHERE id=%s FOR UPDATE", (req.product_id,))
-            row = cur.fetchone()
-            if not row:
-                context.set_code(StatusCode.NOT_FOUND); context.set_details("product not found"); return db_pb2.Order()
-            price, stock = float(row[0]), int(row[1])
-            if stock < req.quantity:
-                context.set_code(StatusCode.FAILED_PRECONDITION); context.set_details("insufficient stock"); return db_pb2.Order()
-            total = price * req.quantity
-            cur.execute("UPDATE products SET stock=stock-%s WHERE id=%s", (req.quantity, req.product_id))
-            cur.execute(
-              "INSERT INTO orders(user_id,product_id,quantity,total_price,status) VALUES(%s,%s,%s,%s,'PLACED') RETURNING id",
-              (req.user_id, req.product_id, req.quantity, total)
+                    page = request.page if request.page > 0 else 1
+                    page_size = request.page_size if request.page_size > 0 else 20
+                    offset = (page - 1) * page_size
+
+                    # total count
+                    cur.execute(f"SELECT COUNT(*) FROM products {where}", params)
+                    total_count = cur.fetchone()[0]
+
+                    # data
+                    cur.execute(
+                        f"""
+                        SELECT id, name, description, category, price, slogan, stock, created_at
+                        FROM products
+                        {where}
+                        ORDER BY id
+                        LIMIT %s OFFSET %s
+                        """,
+                        params + [page_size, offset],
+                    )
+                    rows = cur.fetchall()
+                    products = [row_to_product(r) for r in rows]
+
+            return db_pb2.ListProductsResponse(
+                products=products,
+                page=page,
+                page_size=page_size,
+                total_count=total_count,
             )
-            oid = cur.fetchone()[0]
-            c.commit()
-            return db_pb2.Order(id=oid, user_id=req.user_id, product_id=req.product_id, quantity=req.quantity, total_price=total, status=db_pb2.PLACED)
-        except Exception as e:
-            c.rollback()
-            context.set_code(StatusCode.INTERNAL); context.set_details(str(e)); return db_pb2.Order()
         finally:
-            put(c)
+            conn.close()
 
-# 其余 CRUD（GetProduct/CreateUser/GetUser...）按类似模式实现
+    # ---- Users ----
+    def CreateUser(self, request, context):
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO users (sid, username, email, password_hash)
+                        VALUES (%s, %s, %s, %s)
+                        RETURNING id, sid, username, email, password_hash, created_at
+                        """,
+                        (
+                            request.sid,
+                            request.username,
+                            request.email,
+                            request.password_hash,
+                        ),
+                    )
+                    row = cur.fetchone()
+                    return row_to_user(row)
+        finally:
+            conn.close()
 
-def serve():
-    s = grpc.server(ThreadPoolExecutor(max_workers=16))
-    db_pb2_grpc.add_DbServiceServicer_to_server(DbImpl(), s)
-    s.add_insecure_port("[::]:50051")
-    s.start(); s.wait_for_termination()
+    # ---- Orders ----
+    def CreateOrder(self, request, context):
+        """
+        简化版逻辑：
+        1. 读取 product 价格 & 库存
+        2. 检查库存和数量约束
+        3. 新建订单表记录
+        4. 扣减库存
+        全部在一个事务里完成
+        """
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    # 1. 获取商品
+                    cur.execute(
+                        """
+                        SELECT price, stock
+                        FROM products
+                        WHERE id = %s
+                        FOR UPDATE
+                        """,
+                        (request.product_id,),
+                    )
+                    prod_row = cur.fetchone()
+                    if prod_row is None:
+                        context.abort(grpc.StatusCode.NOT_FOUND, "product not found")
+
+                    price, stock = prod_row
+                    qty = request.quantity
+                    if qty <= 0 or qty > 3:
+                        context.abort(grpc.StatusCode.INVALID_ARGUMENT, "quantity must be 1~3")
+                    if stock < qty:
+                        context.abort(grpc.StatusCode.FAILED_PRECONDITION, "not enough stock")
+
+                    total_price = float(price) * qty
+
+                    # 2. 插入订单
+                    cur.execute(
+                        """
+                        INSERT INTO orders (user_id, product_id, quantity, total_price)
+                        VALUES (%s, %s, %s, %s)
+                        RETURNING id, user_id, product_id, quantity, total_price, created_at
+                        """,
+                        (
+                            request.user_id,
+                            request.product_id,
+                            qty,
+                            total_price,
+                        ),
+                    )
+                    order_row = cur.fetchone()
+
+                    # 3. 扣减库存
+                    cur.execute(
+                        """
+                        UPDATE products
+                        SET stock = stock - %s
+                        WHERE id = %s
+                        """,
+                        (qty, request.product_id),
+                    )
+
+                    return row_to_order(order_row)
+        finally:
+            conn.close()
+
+    def ListOrdersByUser(self, request, context):
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    page = request.page if request.page > 0 else 1
+                    page_size = request.page_size if request.page_size > 0 else 20
+                    offset = (page - 1) * page_size
+
+                    cur.execute(
+                        """
+                        SELECT COUNT(*)
+                        FROM orders
+                        WHERE user_id = %s
+                        """,
+                        (request.user_id,),
+                    )
+                    total_count = cur.fetchone()[0]
+
+                    cur.execute(
+                        """
+                        SELECT id, user_id, product_id, quantity, total_price, created_at
+                        FROM orders
+                        WHERE user_id = %s
+                        ORDER BY created_at DESC
+                        LIMIT %s OFFSET %s
+                        """,
+                        (request.user_id, page_size, offset),
+                    )
+                    rows = cur.fetchall()
+                    orders = [row_to_order(r) for r in rows]
+
+            return db_pb2.ListOrdersResponse(
+                orders=orders,
+                page=page,
+                page_size=page_size,
+                total_count=total_count,
+            )
+        finally:
+            conn.close()
+
+
+# ---------- 启动 gRPC Server ----------
+
+def serve(port: int = 50051):
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    db_pb2_grpc.add_DbServiceServicer_to_server(DbService(), server)
+    server.add_insecure_port(f"[::]:{port}")
+    server.start()
+    logging.info("DB gRPC server started on port %d", port)
+    server.wait_for_termination()
+
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     serve()

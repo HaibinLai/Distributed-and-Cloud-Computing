@@ -344,6 +344,74 @@ class DbService(db_pb2_grpc.DbServiceServicer):
         finally:
             release_connection(conn)
 
+    def DeleteUser(self, request, context):
+        """
+        根据用户 id 删除该用户。
+        DeleteUserRequest:
+            int32 id = 1;
+        DeleteUserResponse:
+            bool success = 1;
+
+            def row_to_user(row):
+    u = db_pb2.User()
+    u.id = row[0]
+    u.sid = row[1]
+    u.username = row[2]
+    u.email = row[3] or ""
+    u.password_hash = row[4]
+    if row[5] is not None:
+        ts = Timestamp()
+        ts.FromDatetime(row[5].replace(tzinfo=timezone.utc))
+        u.created_at.CopyFrom(ts)
+    return u
+        """
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+
+                    # 先尝试查询
+                    cur.execute(
+                        """
+                        SELECT id, sid, username, email, password_hash, created_at
+                        FROM users
+                        WHERE id = %s
+                        """,
+                        (request.id,)
+                    )
+                    row = cur.fetchone()
+
+                    # row 为 None 表示没有匹配的 id
+                    if row is None:
+                        context.set_code(grpc.StatusCode.NOT_FOUND)
+                        context.set_details(f"user with id={request.id} not found")
+                        # 返回空的响应对象（保持 gRPC 类型一致）
+                        return db_pb2.User()
+
+                    # 再尝试删除
+                    cur.execute(
+                        """
+                        DELETE FROM users
+                        WHERE id = %s
+                        RETURNING id
+                        """,
+                        (request.id,)
+                    )
+
+                    row2 = cur.fetchone()
+
+                    # row2 为 None 表示没有匹配的 id
+                    if row2 is None:
+                        context.set_code(grpc.StatusCode.NOT_FOUND)
+                        context.set_details(f"user with id={request.id} not found")
+                        # 返回空的响应对象（保持 gRPC 类型一致）
+                        return db_pb2.User()
+
+                    # 删除成功
+                    return row_to_user(row)
+
+        finally:
+            release_connection(conn)
 
 
     # ---- Orders ----

@@ -297,6 +297,53 @@ class DbService(db_pb2_grpc.DbServiceServicer):
             release_connection(conn)
 
 
+    def UpdateUser(self, request, context):
+        """
+        根据 user id 更新用户信息，并返回更新后的 User。
+        这里假设 UpdateUserRequest 里至少有：
+          - id
+          - username
+          - email
+          - password_hash
+        如果你的 proto 字段名不一样，把 request.xxx 换成对应的名字即可。
+        """
+        conn = get_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    # 用 id 作为主键进行更新
+                    cur.execute(
+                        """
+                        UPDATE users
+                        SET username = %s,
+                            email = %s,
+                            password_hash = %s
+                        WHERE id = %s
+                        RETURNING id, sid, username, email, password_hash, created_at
+                        """,
+                        (
+                            request.username,
+                            request.email,
+                            request.password_hash,
+                            request.id,
+                        ),
+                    )
+
+                    row = cur.fetchone()
+
+                    # 如果没有更新到任何行，说明这个 id 不存在
+                    if row is None:
+                        context.set_code(grpc.StatusCode.NOT_FOUND)
+                        context.set_details(f"user with id={request.id} not found")
+                        # gRPC 要求必须返回一个同类型消息，这里返回空的 User
+                        return db_pb2.User()
+
+                    # 把 row 转成 User proto 返回
+                    user_msg = row_to_user2(row)
+                    return user_msg
+        finally:
+            release_connection(conn)
+
 
 
     # ---- Orders ----

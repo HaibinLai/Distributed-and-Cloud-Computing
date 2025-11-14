@@ -18,7 +18,7 @@ def root_get():  # noqa: E501
     """
 
     logging_client.send_logs([{
-        "service_name": "api-service",
+        "service_name": "api-service/misc",
         "level": "INFO",
         "path": "/",
         "method": "GET",

@@ -35,6 +35,8 @@ from openapi_server.models.user_update_request import UserUpdateRequest  # noqa:
 from openapi_server import util
 from openapi_server import db_pb2, db_pb2_grpc
 
+from openapi_server.logging_service import logging_client
+
 # ===== JWT 配置 =====
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret")  # 作业环境可以简单一点
@@ -50,7 +52,8 @@ _DB_STUB = None
 def _get_db_stub() -> db_pb2_grpc.DbServiceStub:
     global _GRPC_CHANNEL, _DB_STUB
     if _DB_STUB is None:
-        target = os.environ.get("DB_GRPC_TARGET", "localhost:50051")
+        # 如果裸机，就local host:50051；如果在 Docker 里跑，就 db_service:50051
+        target = os.environ.get("DB_GRPC_TARGET", "db_service:50051")
         _GRPC_CHANNEL = grpc.insecure_channel(target)
         _DB_STUB = db_pb2_grpc.DbServiceStub(_GRPC_CHANNEL)
     return _DB_STUB
@@ -137,14 +140,38 @@ def _get_current_user_payload():
     """
     auth_header = connexion.request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "WARNING",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": "Missing or invalid Authorization header"
+        }])
         return None, _error("Missing or invalid Authorization header", 401)
 
     token = auth_header.split(" ", 1)[1].strip()
     try:
         payload = pyjwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
     except pyjwt.ExpiredSignatureError:
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "WARNING",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": "Token expired"
+        }])
         return None, _error("Token expired", 401)
     except pyjwt.InvalidTokenError:
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "WARNING",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": "Invalid token"
+        }])
         return None, _error("Invalid token", 401)
 
     return payload, None
@@ -168,6 +195,14 @@ def users_register_post(body: Union[UserRegisterRequest, Dict]) -> Tuple[Dict, i
     password = data.get("password")
 
     if not sid or not username or not password:
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "WARNING",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": "Missing required fields for registration"
+        }])
         return _error("sid, username and password are required", 400)
 
     # 简单密码 hash（作业够用，生产上应该用 bcrypt/scrypt 等）
@@ -183,7 +218,23 @@ def users_register_post(body: Union[UserRegisterRequest, Dict]) -> Tuple[Dict, i
         user = stub.CreateUser(req)
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+            logging_client.send_logs([{
+                "service_name": "api-service/user",
+                "level": "WARNING",
+                "path": connexion.request.path,
+                "method": connexion.request.method,
+                "user_sid": sid or "",
+                "message": f"User already exists: {e.details()}"
+            }])
             return _error(f"User already exists: {e.details()}", 409)
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
     token = _create_jwt_for_user(user)
@@ -192,6 +243,14 @@ def users_register_post(body: Union[UserRegisterRequest, Dict]) -> Tuple[Dict, i
         "user": _grpc_user_to_profile(user),
         "token": token,
     }
+    logging_client.send_logs([{
+        "service_name": "api-service/user",
+        "level": "INFO",
+        "path": connexion.request.path,
+        "method": connexion.request.method,
+        "user_sid": sid,
+        "message": "User registered successfully"
+    }])
     return _success("User registered successfully", resp_data, 201)
 
 
@@ -210,6 +269,14 @@ def users_login_post(body: Union[UserLoginRequest, Dict]) -> Tuple[Dict, int]:
     password = data.get("password")
 
     if not sid or not password:
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "WARNING",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": "Missing required fields for login"
+        }])
         return _error("sid and password are required", 400)
 
     password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
@@ -220,11 +287,35 @@ def users_login_post(body: Union[UserLoginRequest, Dict]) -> Tuple[Dict, int]:
         user = stub.GetUserBySid(req)
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
+            logging_client.send_logs([{
+                "service_name": "api-service/user",
+                "level": "WARNING",
+                "path": connexion.request.path,
+                "method": connexion.request.method,
+                "user_sid": sid or "",
+                "message": "User not found"
+            }])
             return _error("User not found", 404)
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
     # 校验密码
     if user.password_hash != password_hash:
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "WARNING",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": "Invalid password"
+        }])
         return _error("Invalid password", 401)
 
     token = _create_jwt_for_user(user)
@@ -233,6 +324,14 @@ def users_login_post(body: Union[UserLoginRequest, Dict]) -> Tuple[Dict, int]:
         "user": _grpc_user_to_profile(user),
         "token": token,
     }
+    logging_client.send_logs([{
+        "service_name": "api-service/user",
+        "level": "INFO",
+        "path": connexion.request.path,
+        "method": connexion.request.method,
+        "user_sid": sid,
+        "message": "Login successful"
+    }])
     return _success("Login successful", resp_data, 200)
 
 
@@ -256,9 +355,33 @@ def users_me_get() -> Tuple[Dict, int]:
         user = stub.GetUserBySid(req)
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
+            logging_client.send_logs([{
+                "service_name": "api-service/user",
+                "level": "WARNING",
+                "path": connexion.request.path,
+                "method": connexion.request.method,
+                "user_sid": sid or "",
+                "message": "User not found"
+            }])
             return _error("User not found", 404)
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
+    logging_client.send_logs([{
+        "service_name": "api-service/user",
+        "level": "INFO",
+        "path": connexion.request.path,
+        "method": connexion.request.method,
+        "user_sid": sid,
+        "message": "User profile fetched successfully"
+    }])
     return _success("User profile fetched", _grpc_user_to_profile(user), 200)
 
 
@@ -284,7 +407,23 @@ def users_me_patch(body: Union[UserUpdateRequest, Dict]) -> Tuple[Dict, int]:
         user = stub.GetUserBySid(get_req)
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
+            logging_client.send_logs([{
+                "service_name": "api-service/user",
+                "level": "ERROR",
+                "path": connexion.request.path,
+                "method": connexion.request.method,
+                "user_sid": sid or "",
+                "message": "User not found"
+            }])
             return _error("User not found", 404)
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
     new_username = data.get("username", user.username)
@@ -300,8 +439,24 @@ def users_me_patch(body: Union[UserUpdateRequest, Dict]) -> Tuple[Dict, int]:
         )
         updated = stub.UpdateUser(update_req)
     except grpc.RpcError as e:
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
+    logging_client.send_logs([{
+        "service_name": "api-service/user",
+        "level": "INFO",
+        "path": connexion.request.path,
+        "method": connexion.request.method,
+        "user_sid": sid,
+        "message": "User profile updated successfully"
+    }])
     return _success("User profile updated", _grpc_user_to_profile(updated), 200)
 
 
@@ -325,13 +480,45 @@ def users_me_delete() -> Tuple[Dict, int]:
         user = stub.GetUserBySid(get_req)
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
+            logging_client.send_logs([{
+                "service_name": "api-service/user",
+                "level": "ERROR",
+                "path": connexion.request.path,
+                "method": connexion.request.method,
+                "user_sid": sid or "",
+                "message": "User not found"
+            }])
             return _error("User not found", 404)
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
     try:
         del_req = db_pb2.DeleteUserRequest(id=user.id)
         stub.DeleteUser(del_req)
     except grpc.RpcError as e:
+        logging_client.send_logs([{
+            "service_name": "api-service/user",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": sid or "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
+    logging_client.send_logs([{
+        "service_name": "api-service/user",
+        "level": "INFO",
+        "path": connexion.request.path,
+        "method": connexion.request.method,
+        "user_sid": sid,
+        "message": "User deactivated successfully"
+    }])
     return _success("User deactivated", None, 200)

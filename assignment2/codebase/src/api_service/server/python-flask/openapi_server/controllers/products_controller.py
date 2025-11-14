@@ -11,11 +11,14 @@ from openapi_server.models.product import Product               # 同上，可�
 
 import openapi_server
 from openapi_server import db_pb2, db_pb2_grpc
+from openapi_server.logging_service import logging_client
 
 # ---------------- gRPC Stub 初始化 ----------------
 
 _GRPC_CHANNEL = None
 _DB_STUB = None
+
+DB_SERVICE_ADDR = os.environ.get("DB_SERVICE_ADDR", "db_service:50051")
 
 
 def _get_db_stub() -> db_pb2_grpc.DbServiceStub:
@@ -25,7 +28,7 @@ def _get_db_stub() -> db_pb2_grpc.DbServiceStub:
     """
     global _GRPC_CHANNEL, _DB_STUB
     if _DB_STUB is None:
-        target = os.environ.get("DB_GRPC_TARGET", "localhost:50051")
+        target = os.environ.get("DB_GRPC_TARGET", "db_service:50051")
         _GRPC_CHANNEL = grpc.insecure_channel(target)
         _DB_STUB = db_pb2_grpc.DbServiceStub(_GRPC_CHANNEL)
     return _DB_STUB
@@ -104,9 +107,29 @@ def products_get(
         resp = stub.ListProducts(req)
     except grpc.RpcError as e:
         # gRPC 调用失败，返回 502
+        logging_client.send_logs([{
+            "service_name": "api-service/products",
+            "level": "ERROR",
+            "path": "/products",
+            "method": "GET",
+            "user_sid": "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
+
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
     products = [_grpc_product_to_dict(p) for p in resp.products]
+
+    logging_client.send_logs([
+        {
+            "service_name": "api-service/products",
+            "level": "INFO",
+            "path": "/products",
+            "method": "GET",
+            "user_sid": "",
+            "message": f"Products fetched: {len(products)}"
+        }
+    ])
 
     return _success(
         "Products fetched successfully",
@@ -137,8 +160,39 @@ def products_id_get(id_: int) -> Tuple[Dict, int]:
         p = stub.GetProduct(req)
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
+            logging_client.send_logs([
+                {
+                    "service_name": "api-service/products",
+                    "level": "ERROR",
+                    "path": f"/products/{id_}",
+                    "method": "GET",
+                    "user_sid": "",
+                    "message": f"Product {id_} not found"
+                }
+            ])
             return _error("Product not found", 404)
+        logging_client.send_logs([
+            {
+                "service_name": "api-service/products",
+                "level": "ERROR",
+                "path": f"/products/{id_}",
+                "method": "GET",
+                "user_sid": "",
+                "message": f"DB service error: {e.code().name} - {e.details()}"
+            }
+        ])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
+
+    logging_client.send_logs([
+        {
+            "service_name": "api-service/products",
+            "level": "INFO",
+            "path": f"/products/{id_}",
+            "method": "GET",
+            "user_sid": "",
+            "message": f"Product {id_} fetched"
+        }
+    ])
 
     return _success(
         "Product found",

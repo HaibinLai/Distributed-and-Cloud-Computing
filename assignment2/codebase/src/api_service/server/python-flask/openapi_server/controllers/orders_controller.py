@@ -5,6 +5,7 @@ from openapi_server.models.error_response import ErrorResponse
 from openapi_server.models.order import Order
 from openapi_server.models.order_create_request import OrderCreateRequest
 
+from openapi_server.logging_service import logging_client
 
 # # ---- Fake Data Storage (for Step 1 only) ----
 # FAKE_ORDERS = [
@@ -121,6 +122,14 @@ def _success(message: str, data, code: int = 200):
         "data": data,
         "code": code,
     }
+    logging_client.send_logs([{
+        "service_name": "api-service/orders",
+        "level": "INFO",
+        "path": connexion.request.path,
+        "method": connexion.request.method,
+        "user_sid": "",
+        "message": message
+    }])
     # connexion 一般允许 return (body, status_code)
     return body, code
 
@@ -141,7 +150,8 @@ def _get_db_stub() -> db_pb2_grpc.DbServiceStub:
     """
     global _GRPC_CHANNEL, _DB_STUB
     if _DB_STUB is None:
-        target = os.environ.get("DB_GRPC_TARGET", "localhost:50051")
+        # 如果裸机，就local host:50051；如果在 Docker 里跑，就 db_service:50051
+        target = os.environ.get("DB_GRPC_TARGET", "db_service:50051")
         _GRPC_CHANNEL = grpc.insecure_channel(target)
         _DB_STUB = db_pb2_grpc.DbServiceStub(_GRPC_CHANNEL)
     return _DB_STUB
@@ -159,6 +169,14 @@ def orders_get(page: int = None, page_size: int = None):
 
     user_id = payload.get("user_id")
     if user_id is None:
+        logging_client.send_logs([{
+            "service_name": "api-service/orders",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": "Invalid token: missing user_id"
+        }])
         return _error("Invalid token: missing user_id", 401)
 
     stub = _get_db_stub()
@@ -172,6 +190,14 @@ def orders_get(page: int = None, page_size: int = None):
     try:
         resp = stub.ListOrdersByUser(req)
     except grpc.RpcError as e:
+        logging_client.send_logs([{
+            "service_name": "api-service/orders",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
     orders = [_grpc_order_to_dict(o) for o in resp.orders]
@@ -202,8 +228,24 @@ def orders_id_get(id_, token_info=None):
 
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
+            logging_client.send_logs([{
+                "service_name": "api-service/orders",
+                "level": "WARNING",
+                "path": connexion.request.path,
+                "method": connexion.request.method,
+                "user_sid": "",
+                "message": "Order not found"
+            }])
             return _error("Order not found", 404)
 
+        logging_client.send_logs([{
+            "service_name": "api-service/orders",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(
             f"DB service error: {e.code().name} - {e.details()}",
             502,
@@ -227,7 +269,24 @@ def orders_id_delete(id_, token_info=None):
 
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
+            logging_client.send_logs([{
+                "service_name": "api-service/orders",
+                "level": "WARNING",
+                "path": connexion.request.path,
+                "method": connexion.request.method,
+                "user_sid": "",
+                "message": "Order not found"
+            }])
+
             return _error("Order not found", 404)
+        logging_client.send_logs([{
+            "service_name": "api-service/orders",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
     # 调用成功就认为删除成功
@@ -247,11 +306,27 @@ def orders_post(order_create_request=None, token_info=None):
         )
 
     if order_create_request is None:
+        logging_client.send_logs([{
+            "service_name": "api-service/orders",
+            "level": "WARNING",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": "Invalid order request body"
+        }])
         return _error("Invalid order request body", 400)
 
     # 从 token_info 中取当前用户
     user_id = token_info.get("user_id") if token_info else None
     if not user_id:
+        logging_client.send_logs([{
+            "service_name": "api-service/orders",
+            "level": "WARNING",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": "Missing user_id in token"
+        }])
         return _error("Missing user_id in token", 401)
 
     stub = _get_db_stub()
@@ -272,6 +347,14 @@ def orders_post(order_create_request=None, token_info=None):
 
     except grpc.RpcError as e:
         # 这里可以根据不同错误码做更细致处理，比如库存不足/非法数量等
+        logging_client.send_logs([{
+            "service_name": "api-service/orders",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": f"DB service error: {e.code().name} - {e.details()}"
+        }])
         return _error(
             f"DB service error: {e.code().name} - {e.details()}",
             502,

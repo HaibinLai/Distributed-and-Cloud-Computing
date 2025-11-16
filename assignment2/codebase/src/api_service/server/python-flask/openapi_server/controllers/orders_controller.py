@@ -160,8 +160,8 @@ def _get_db_stub() -> db_pb2_grpc.DbServiceStub:
 def orders_get(page: int = None, page_size: int = None):
     """
     GET /orders
-    - 从 JWT 里拿当前用户 user_id
-    - 调 gRPC ListOrdersByUser
+    - Get user_id from JWT token
+    - Take gRPC ListOrdersByUser
     """
     payload, err = _get_current_user_payload()
     if err is not None:
@@ -202,6 +202,14 @@ def orders_get(page: int = None, page_size: int = None):
 
     orders = [_grpc_order_to_dict(o) for o in resp.orders]
 
+    logging_client.send_logs([{
+        "service_name": "api-service/orders",
+        "level": "INFO",
+        "path": connexion.request.path,
+        "method": connexion.request.method,
+        "user_sid": "",
+        "message": f"Fetched {len(orders)} orders for user {user_id}"
+    }])
     return _success(
         "Orders fetched successfully",
         data={
@@ -216,6 +224,22 @@ def orders_get(page: int = None, page_size: int = None):
 
 def orders_id_get(id_, token_info=None):
     """Get a single order by id."""
+
+    payload, err = _get_current_user_payload()
+    if err is not None:
+        return err 
+
+    user_id = payload.get("user_id")
+    if user_id is None:
+        logging_client.send_logs([{
+            "service_name": "api-service/orders",
+            "level": "ERROR",
+            "path": connexion.request.path,
+            "method": connexion.request.method,
+            "user_sid": "",
+            "message": "Invalid token: missing user_id"
+        }])
+        return _error("Invalid token: missing user_id", 401)
 
     order_id = id_  # 为了可读性，内部你可以用 order_id 这个名字
 

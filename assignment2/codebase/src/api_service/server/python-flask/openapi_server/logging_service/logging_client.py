@@ -36,10 +36,12 @@ def send_logs(logs):
     """
     stub = get_logging_stub()
 
+    INSTANCE_NAME = os.getenv("INSTANCE_NAME", "unknown")
+
     def gen():
         for log in logs:
             yield logging_pb2.LogMessage(
-                service_name=log.get("service_name", "api-service"),
+                service_name=INSTANCE_NAME,
                 level=log.get("level", "INFO"),
                 path=log.get("path", ""),
                 method=log.get("method", ""),

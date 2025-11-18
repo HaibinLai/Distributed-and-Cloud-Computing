@@ -32,7 +32,7 @@ components:
           example: "Electronics"
         price:
           type: number
-          format: float
+          format: string
           example: 999.99
         slogan:
           type: string

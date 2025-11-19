@@ -38,7 +38,7 @@ message Order {
   int32 user_id = 2;
   int32 product_id = 3;
   int32 quantity = 4;
-  string total_price = 5;          // 同上，简化为 double
+  string total_price = 5;          
   google.protobuf.Timestamp created_at = 6;
 }
 

@@ -421,166 +421,170 @@ class DbService(db_pb2_grpc.DbServiceServicer):
             release_connection(conn)
 
 
+
     # ---- Orders ----
-from decimal import Decimal
-import grpc
-import db_pb2
+    def CreateOrder(self, request, context):
+        """
+        CreateOrder 逻辑说明（在一个事务里完成）：
+        1. 使用 SELECT ... FOR UPDATE 锁定商品行，读取 price 与 stock
+        2. 校验 quantity 范围（1~3）以及库存是否足够
+        3. 基于数据库中的 price 计算 total_price（使用 Decimal 处理金额）
+        4. 向 orders 表插入新订单记录，并返回生成的订单信息
+        5. 扣减 products 表中的库存
 
-# ---- Orders ----
-def CreateOrder(self, request, context):
-    """
-    CreateOrder 逻辑说明（在一个事务里完成）：
-      1. 使用 SELECT ... FOR UPDATE 锁定商品行，读取 price 与 stock
-      2. 校验 quantity 范围（1~3）以及库存是否足够
-      3. 基于数据库中的 price 计算 total_price（使用 Decimal 处理金额）
-      4. 向 orders 表插入新订单记录，并返回生成的订单信息
-      5. 扣减 products 表中的库存
-
-    所有 SQL 操作都使用参数化查询（%s + 参数元组），防止 SQL 注入。
-    价格只信任数据库中的 price，不信任客户端传入的任何金额字段。
-    """
-    conn = get_connection()
-    try:
-        with conn:  # 开启一个事务，退出时自动 commit / rollback
-            with conn.cursor() as cur:
-                # 1. 锁定商品行，读取价格和库存
-                cur.execute(
-                    """
-                    SELECT price, stock
-                    FROM products
-                    WHERE id = %s
-                    FOR UPDATE
-                    """,
-                    (request.product_id,),
-                )
-                prod_row = cur.fetchone()
-                if prod_row is None:
-                    context.abort(grpc.StatusCode.NOT_FOUND, "product not found")
-
-                price, stock = prod_row  # price: NUMERIC -> Decimal, stock: int
-
-                # 2. 校验数量和库存
-                qty = int(request.quantity)
-                if qty <= 0 or qty > 3:
-                    context.abort(
-                        grpc.StatusCode.INVALID_ARGUMENT,
-                        "quantity must be between 1 and 3",
-                    )
-
-                if stock < qty:
-                    context.abort(
-                        grpc.StatusCode.FAILED_PRECONDITION,
-                        "not enough stock",
-                    )
-
-                # 3. 计算总价（基于 DB 中的 price，使用 Decimal 防止 float 精度问题）
-                # psycopg2 读取 NUMERIC 默认就是 Decimal，可以直接 * qty
-                if not isinstance(price, Decimal):
-                    price = Decimal(str(price))
-                total_price = price * Decimal(qty)
-
-                # 4. 插入订单记录（参数化查询，防 SQL 注入）
-                cur.execute(
-                    """
-                    INSERT INTO orders (user_id, product_id, quantity, total_price)
-                    VALUES (%s, %s, %s, %s)
-                    RETURNING id, user_id, product_id, quantity, total_price, created_at
-                    """,
-                    (
-                        request.user_id,
-                        request.product_id,
-                        qty,
-                        total_price,
-                    ),
-                )
-                order_row = cur.fetchone()
-                if order_row is None:
-                    context.abort(
-                        grpc.StatusCode.INTERNAL,
-                        "failed to create order",
-                    )
-
-                # 5. 扣减库存（同一个事务内，且商品行已被 FOR UPDATE 锁定）
-                cur.execute(
-                    """
-                    UPDATE products
-                    SET stock = stock - %s
-                    WHERE id = %s
-                    """,
-                    (qty, request.product_id),
-                )
-
-                # row_to_order: 将 DB 行转换成 db_pb2.Order
-                return row_to_order(order_row)
-    except Exception as e:
-        # 出现异常时，事务会自动回滚
-        conn.rollback()
-    finally:
-        release_connection(conn)
-
-    def ListOrdersByUser(self, request, context):
+        所有 SQL 操作都使用参数化查询（%s + 参数元组），防止 SQL 注入。
+        价格只信任数据库中的 price，不信任客户端传入的任何金额字段。
+        """
         conn = get_connection()
         try:
-            with conn:
+            with conn:  # 开启一个事务，退出时自动 commit / rollback
                 with conn.cursor() as cur:
-                    page = request.page if request.page > 0 else 1
-                    page_size = request.page_size if request.page_size > 0 else 20
-                    offset = (page - 1) * page_size
-
+                    # 1. 锁定商品行，读取价格和库存
                     cur.execute(
                         """
-                        SELECT COUNT(*)
-                        FROM orders
-                        WHERE user_id = %s
+                        SELECT price, stock
+                        FROM products
+                        WHERE id = %s
+                        FOR UPDATE
                         """,
-                        (request.user_id,),
+                        (request.product_id,),
                     )
-                    total_count = cur.fetchone()[0]
+                    prod_row = cur.fetchone()
+                    if prod_row is None:
+                        context.abort(grpc.StatusCode.NOT_FOUND, "product not found")
 
+                    price, stock = prod_row  # price: NUMERIC -> Decimal, stock: int
+
+                    # 2. 校验数量和库存
+                    qty = int(request.quantity)
+                    if qty <= 0 or qty > 3:
+                        context.abort(
+                            grpc.StatusCode.INVALID_ARGUMENT,
+                            "quantity must be between 1 and 3",
+                        )
+
+                    if stock < qty:
+                        context.abort(
+                            grpc.StatusCode.FAILED_PRECONDITION,
+                            "not enough stock",
+                        )
+
+                    # 3. 计算总价（基于 DB 中的 price，使用 Decimal 防止 float 精度问题）
+                    # psycopg2 读取 NUMERIC 默认就是 Decimal，可以直接 * qty
+
+                    # ---- Orders ----
+                    from decimal import Decimal
+                    import grpc
+                    import db_pb2
+                    if not isinstance(price, Decimal):
+                        price = Decimal(str(price))
+                    total_price = price * Decimal(qty)
+
+                    total_price = float(total_price)
+
+                    # 4. 插入订单记录（参数化查询，防 SQL 注入）
                     cur.execute(
                         """
-                        SELECT id, user_id, product_id, quantity, total_price, created_at
-                        FROM orders
-                        WHERE user_id = %s
-                        ORDER BY created_at DESC
-                        LIMIT %s OFFSET %s
+                        INSERT INTO orders (user_id, product_id, quantity, total_price)
+                        VALUES (%s, %s, %s, %s)
+                        RETURNING id, user_id, product_id, quantity, total_price, created_at
                         """,
-                        (request.user_id, page_size, offset),
+                        (
+                            request.user_id,
+                            request.product_id,
+                            qty,
+                            total_price,
+                        ),
                     )
-                    rows = cur.fetchall()
-                    orders = [row_to_order(r) for r in rows]
+                    order_row = cur.fetchone()
+                    # order_row
+                    if order_row is None:
+                        context.abort(
+                            grpc.StatusCode.INTERNAL,
+                            "failed to create order",
+                        )
 
-            return db_pb2.ListOrdersResponse(
-                orders=orders,
-                page=page,
-                page_size=page_size,
-                total_count=total_count,
-            )
+                    # 5. 扣减库存（同一个事务内，且商品行已被 FOR UPDATE 锁定）
+                    cur.execute(
+                        """
+                        UPDATE products
+                        SET stock = stock - %s
+                        WHERE id = %s
+                        """,
+                        (qty, request.product_id),
+                    )
+
+                    # row_to_order: 将 DB 行转换成 db_pb2.Order
+                    return row_to_order(order_row)
+        except Exception as e:
+            # 出现异常时，事务会自动回滚
+            conn.rollback()
         finally:
             release_connection(conn)
+
+    def ListOrdersByUser(self, request, context):
+            conn = get_connection()
+            try:
+                with conn:
+                    with conn.cursor() as cur:
+                        page = request.page if request.page > 0 else 1
+                        page_size = request.page_size if request.page_size > 0 else 20
+                        offset = (page - 1) * page_size
+
+                        cur.execute(
+                            """
+                            SELECT COUNT(*)
+                            FROM orders
+                            WHERE user_id = %s
+                            """,
+                            (request.user_id,),
+                        )
+                        total_count = cur.fetchone()[0]
+
+                        cur.execute(
+                            """
+                            SELECT id, user_id, product_id, quantity, total_price, created_at
+                            FROM orders
+                            WHERE user_id = %s
+                            ORDER BY created_at DESC
+                            LIMIT %s OFFSET %s
+                            """,
+                            (request.user_id, page_size, offset),
+                        )
+                        rows = cur.fetchall()
+                        orders = [row_to_order(r) for r in rows]
+
+                return db_pb2.ListOrdersResponse(
+                    orders=orders,
+                    page=page,
+                    page_size=page_size,
+                    total_count=total_count,
+                )
+            finally:
+                release_connection(conn)
 
 
     def GetOrder(self, request, context):
-        conn = get_connection()
-        try:
-            with conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        SELECT id, user_id, product_id, quantity, total_price, created_at
-                        FROM orders
-                        WHERE id = %s
-                        """,
-                        (request.id,),
-                    )
-                    row = cur.fetchone()
-                    if row is None:
-                        context.abort(grpc.StatusCode.NOT_FOUND, "order not found")
+            conn = get_connection()
+            try:
+                with conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            SELECT id, user_id, product_id, quantity, total_price, created_at
+                            FROM orders
+                            WHERE id = %s
+                            """,
+                            (request.id,),
+                        )
+                        row = cur.fetchone()
+                        if row is None:
+                            context.abort(grpc.StatusCode.NOT_FOUND, "order not found")
 
-                    return row_to_order(row)
+                        return row_to_order(row)
 
-        finally:
-            release_connection(conn)
+            finally:
+                release_connection(conn)
 
 
     def DeleteOrder(self, request, context):
@@ -630,7 +634,8 @@ def CreateOrder(self, request, context):
                         (qty, product_id),
                     )
 
-            return db_pb2.DeleteOrderResponse(success=True)
+            from google.protobuf import empty_pb2
+            return empty_pb2.Empty()
 
         finally:
             release_connection(conn)

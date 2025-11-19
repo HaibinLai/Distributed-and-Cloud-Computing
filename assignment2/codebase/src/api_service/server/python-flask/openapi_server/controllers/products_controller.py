@@ -118,6 +118,18 @@ def products_get(
 
         return _error(f"DB service error: {e.code().name} - {e.details()}", 502)
 
+
+    # print out resp as gRPC message for debugging
+    res2 = resp.SerializeToString()
+    print(resp, flush=True)
+    print("Serialized gRPC response as bytes:", flush=True)
+    print(res2, flush=True)
+
+    import binascii
+    hex_str = binascii.hexlify(res2).decode("ascii")
+    print("Hexadecimal representation of the gRPC response:", flush=True)
+    print(hex_str, flush=True)
+
     products = [_grpc_product_to_dict(p) for p in resp.products]
 
     logging_client.send_logs([
@@ -158,6 +170,18 @@ def products_id_get(id_: int) -> Tuple[Dict, int]:
         # 那么就用 db_pb2.GetProductRequest
         req = db_pb2.GetProductRequest(id=id_)
         p = stub.GetProduct(req)
+
+        # print out resp as gRPC message for debugging
+        res2 = p.SerializeToString()
+        print(p, flush=True)
+        print("Serialized gRPC response as bytes:", flush=True)
+        print(res2, flush=True)
+
+        import binascii
+        hex_str = binascii.hexlify(res2).decode("ascii")
+        print("Hexadecimal representation of the gRPC response:", flush=True)
+        print(hex_str, flush=True)
+        
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
             logging_client.send_logs([

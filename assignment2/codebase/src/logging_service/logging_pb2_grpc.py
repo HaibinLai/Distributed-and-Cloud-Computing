@@ -26,7 +26,8 @@ if _version_not_supported:
 
 
 class LoggingServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """注意：这是 **client-side streaming**
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -35,18 +36,18 @@ class LoggingServiceStub(object):
             channel: A grpc.Channel.
         """
         self.StreamLogs = channel.stream_unary(
-                '/log.LoggingService/StreamLogs',
-                request_serializer=logging__pb2.LogEntry.SerializeToString,
-                response_deserializer=logging__pb2.LogAck.FromString,
+                '/logging.LoggingService/StreamLogs',
+                request_serializer=logging__pb2.LogMessage.SerializeToString,
+                response_deserializer=logging__pb2.LogSummary.FromString,
                 _registered_method=True)
 
 
 class LoggingServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """注意：这是 **client-side streaming**
+    """
 
     def StreamLogs(self, request_iterator, context):
-        """API Service 持续写入日志（单次长连接）
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -56,19 +57,20 @@ def add_LoggingServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'StreamLogs': grpc.stream_unary_rpc_method_handler(
                     servicer.StreamLogs,
-                    request_deserializer=logging__pb2.LogEntry.FromString,
-                    response_serializer=logging__pb2.LogAck.SerializeToString,
+                    request_deserializer=logging__pb2.LogMessage.FromString,
+                    response_serializer=logging__pb2.LogSummary.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'log.LoggingService', rpc_method_handlers)
+            'logging.LoggingService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('log.LoggingService', rpc_method_handlers)
+    server.add_registered_method_handlers('logging.LoggingService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class LoggingService(object):
-    """Missing associated documentation comment in .proto file."""
+    """注意：这是 **client-side streaming**
+    """
 
     @staticmethod
     def StreamLogs(request_iterator,
@@ -84,9 +86,9 @@ class LoggingService(object):
         return grpc.experimental.stream_unary(
             request_iterator,
             target,
-            '/log.LoggingService/StreamLogs',
-            logging__pb2.LogEntry.SerializeToString,
-            logging__pb2.LogAck.FromString,
+            '/logging.LoggingService/StreamLogs',
+            logging__pb2.LogMessage.SerializeToString,
+            logging__pb2.LogSummary.FromString,
             options,
             channel_credentials,
             insecure,

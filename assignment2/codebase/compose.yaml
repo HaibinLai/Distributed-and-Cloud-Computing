@@ -7,9 +7,9 @@ services:
     container_name: postgres
     hostname: postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: dncc
+      POSTGRES_PASSWORD: dncc
+      POSTGRES_DB: goodsstore
     ports:
       - "5432:5432" # Expose PostgreSQL to localhost ("local:container")
     volumes:
@@ -79,6 +79,89 @@ services:
       "
 
   ##### YOUR SERVICES GO BELOW THIS LINE #####
+
+  db_service:
+    build: ./src/db_service      # 根据你的真实路径改
+    container_name: db_service
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_DSN: "dbname=goodsstore user=dncc password=dncc host=postgres port=5432"
+
+  # api_service:
+  #     build: ./src/api_service/server/python-flask/  # 你 Flask 代码所在目录
+  #     container_name: api_service
+  #     depends_on:
+  #       # - db_service
+  #       - logging_service
+  #     environment:
+  #       # DB_ADDR: "db_service:50051"
+  #       LOGGING_ADDR: "logging_service:50052"
+  #     ports:
+  #       - "8080:8080"   # 把 API 暴露给外面 (curl 打这个端口)
+  #     # 启动
+    # ---------- API 副本 ----------
+  api1:
+    build:
+      context: ./src/api_service/server/python-flask/
+    container_name: api1
+    env_file:
+      - .env
+    environment:
+      - LOGGING_ADDR=logging_service:50052
+      - INSTANCE_NAME=api1
+      - DB_ADDR=db_service:50051
+    ports: []    # 不再直接映射到宿主机端口，由 nginx 代理
+    depends_on:
+      - db_service
+      - logging_service
+
+  api2:
+    build:
+      context: ./src/api_service/server/python-flask/
+    container_name: api2
+    env_file:
+      - .env
+    environment:
+      - INSTANCE_NAME=api2
+      - LOGGING_ADDR=logging_service:50052
+      - DB_ADDR=db_service:50051
+    ports: []
+    depends_on:
+      - db_service
+      - logging_service
+
+  # ---------- NGINX 负载均衡 ----------
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_lb
+    depends_on:
+      - api1
+      - api2
+    ports:
+      - "8080:80"       # 外部访问 http://localhost:8080 -> NGINX
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - default
+
+
+  logging_service:
+    build:
+      context: ./src/logging_service
+      dockerfile: Dockerfile
+    container_name: logging_service
+    hostname: logging_service
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TOPIC=api-logs
+    # gRPC 只在内部用，可以不映射到宿主机
+    ports:
+      - "50052:50052"
+    networks:
+      - default
 
 volumes:
   pg_data: # A placeholder volume without any configuration

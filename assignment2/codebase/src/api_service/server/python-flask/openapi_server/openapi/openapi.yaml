@@ -1,0 +1,566 @@
+openapi: 3.0.3
+info:
+  description: |
+    Simple goods store API with products, users, and orders.
+  title: Goods Store API
+  version: 1.0.0
+servers:
+- url: http://localhost:5000
+paths:
+  /:
+    get:
+      description: Return a welcome message.
+      operationId: root_get
+      responses:
+        "200":
+          content:
+            text/plain:
+              schema:
+                example: Hello!
+                type: string
+          description: Greeting message
+      summary: Greeting
+      tags:
+      - Misc
+      x-openapi-router-controller: openapi_server.controllers.misc_controller
+  /orders:
+    get:
+      operationId: orders_get
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Order'
+                type: array
+          description: List of orders
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: List all orders of current user
+      tags:
+      - Orders
+      x-openapi-router-controller: openapi_server.controllers.orders_controller
+    post:
+      operationId: orders_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: Order created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Place an order
+      tags:
+      - Orders
+      x-openapi-router-controller: openapi_server.controllers.orders_controller
+  /orders/{id}:
+    delete:
+      operationId: orders_id_delete
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Order cancelled
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Order not found
+      security:
+      - bearerAuth: []
+      summary: Cancel an order
+      tags:
+      - Orders
+      x-openapi-router-controller: openapi_server.controllers.orders_controller
+    get:
+      operationId: orders_id_get
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: Order found
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Order not found
+      security:
+      - bearerAuth: []
+      summary: Get an order by id (current user's order)
+      tags:
+      - Orders
+      x-openapi-router-controller: openapi_server.controllers.orders_controller
+  /products:
+    get:
+      description: Get all products.
+      operationId: products_get
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Product'
+                type: array
+          description: List of products
+      summary: List products
+      tags:
+      - Products
+      x-openapi-router-controller: openapi_server.controllers.products_controller
+  /products/{id}:
+    get:
+      operationId: products_id_get
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: Product found
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Product not found
+      summary: Get product by id
+      tags:
+      - Products
+      x-openapi-router-controller: openapi_server.controllers.products_controller
+  /users/login:
+    post:
+      operationId: users_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+          description: Login success
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Invalid credentials
+      summary: Login and get JWT
+      tags:
+      - Users
+      x-openapi-router-controller: openapi_server.controllers.users_controller
+  /users/me:
+    delete:
+      operationId: users_me_delete
+      responses:
+        "204":
+          description: User deactivated
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Deactivate current user's account
+      tags:
+      - Users
+      x-openapi-router-controller: openapi_server.controllers.users_controller
+    get:
+      operationId: users_me_get
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: Current user profile
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Get current user's profile
+      tags:
+      - Users
+      x-openapi-router-controller: openapi_server.controllers.users_controller
+    patch:
+      operationId: users_me_patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: Updated profile
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Update current user's profile
+      tags:
+      - Users
+      x-openapi-router-controller: openapi_server.controllers.users_controller
+  /users/register:
+    post:
+      operationId: users_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: User created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+      summary: Register a new user
+      tags:
+      - Users
+      x-openapi-router-controller: openapi_server.controllers.users_controller
+components:
+  schemas:
+    Product:
+      example:
+        price: 999.99
+        name: Laptop
+        description: A powerful laptop
+        created_at: 2025-11-13T12:00:00Z
+        id: 1
+        category: Electronics
+        stock: 10
+        slogan: Fast and Light
+      properties:
+        id:
+          example: 1
+          title: id
+          type: integer
+        name:
+          example: Laptop
+          title: name
+          type: string
+        description:
+          example: A powerful laptop
+          title: description
+          type: string
+        category:
+          example: Electronics
+          title: category
+          type: string
+        price:
+          example: 999.99
+          format: float
+          title: price
+          type: number
+        slogan:
+          example: Fast and Light
+          title: slogan
+          type: string
+        stock:
+          example: 10
+          title: stock
+          type: integer
+        created_at:
+          example: 2025-11-13T12:00:00Z
+          format: date-time
+          title: created_at
+          type: string
+      required:
+      - created_at
+      - id
+      - name
+      - price
+      - stock
+      title: Product
+      type: object
+    UserProfile:
+      example:
+        created_at: 2025-11-13T12:00:00Z
+        id: 1
+        email: haibin@example.com
+        username: haibin
+        sid: "12345678"
+      properties:
+        id:
+          example: 1
+          title: id
+          type: integer
+        username:
+          example: haibin
+          title: username
+          type: string
+        email:
+          example: haibin@example.com
+          format: email
+          title: email
+          type: string
+        sid:
+          example: "12345678"
+          title: sid
+          type: string
+        created_at:
+          example: 2025-11-13T12:00:00Z
+          format: date-time
+          title: created_at
+          type: string
+      required:
+      - created_at
+      - id
+      - sid
+      title: UserProfile
+      type: object
+    UserRegisterRequest:
+      example:
+        password: password
+        email: email
+        sid: sid
+        username: username
+      properties:
+        sid:
+          title: sid
+          type: string
+        password:
+          format: password
+          title: password
+          type: string
+        username:
+          title: username
+          type: string
+        email:
+          format: email
+          title: email
+          type: string
+      required:
+      - password
+      - sid
+      title: UserRegisterRequest
+      type: object
+    UserLoginRequest:
+      example:
+        password: password
+        sid: sid
+      properties:
+        sid:
+          title: sid
+          type: string
+        password:
+          format: password
+          title: password
+          type: string
+      required:
+      - password
+      - sid
+      title: UserLoginRequest
+      type: object
+    UserUpdateRequest:
+      additionalProperties: false
+      example:
+        email: email
+        username: username
+      properties:
+        username:
+          title: username
+          type: string
+        email:
+          format: email
+          title: email
+          type: string
+      title: UserUpdateRequest
+      type: object
+    AuthTokenResponse:
+      example:
+        user:
+          created_at: 2025-11-13T12:00:00Z
+          id: 1
+          email: haibin@example.com
+          username: haibin
+          sid: "12345678"
+        token: token
+      properties:
+        token:
+          description: JWT token
+          title: token
+          type: string
+        user:
+          $ref: '#/components/schemas/UserProfile'
+      title: AuthTokenResponse
+      type: object
+    Order:
+      example:
+        quantity: 2
+        total_price: 1999.98
+        user_id: 1
+        product_id: 2
+        created_at: 2025-11-13T12:00:00Z
+        id: 1
+      properties:
+        id:
+          example: 1
+          title: id
+          type: integer
+        user_id:
+          example: 1
+          title: user_id
+          type: integer
+        product_id:
+          example: 2
+          title: product_id
+          type: integer
+        quantity:
+          example: 2
+          maximum: 3
+          minimum: 1
+          title: quantity
+          type: integer
+        total_price:
+          example: 1999.98
+          format: float
+          title: total_price
+          type: number
+        created_at:
+          example: 2025-11-13T12:00:00Z
+          format: date-time
+          title: created_at
+          type: string
+      required:
+      - created_at
+      - id
+      - product_id
+      - quantity
+      - total_price
+      - user_id
+      title: Order
+      type: object
+    OrderCreateRequest:
+      example:
+        quantity: 2
+        product_id: 0
+      properties:
+        product_id:
+          title: product_id
+          type: integer
+        quantity:
+          maximum: 3
+          minimum: 1
+          title: quantity
+          type: integer
+      required:
+      - product_id
+      - quantity
+      title: OrderCreateRequest
+      type: object
+    ErrorResponse:
+      example:
+        error: error
+      properties:
+        error:
+          title: error
+          type: string
+      required:
+      - error
+      title: ErrorResponse
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+      x-bearerInfoFunc: openapi_server.controllers.security_controller.info_from_bearerAuth

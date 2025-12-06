@@ -1,0 +1,9 @@
+[project]
+name = "flask-app"
+version = "0.1.0"
+description = "Flask application for the reverse proxy example"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flask==3.0.3",
+]

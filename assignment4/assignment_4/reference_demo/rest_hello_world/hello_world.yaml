@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: Hello World
+  description: A basic example showing how to write basic RESTful APIs.
+  version: 1.0.0    # defined by yourself
+
+# Tags cluster API operations into different groups for fine-grained control.
+tags:
+  - name: Dialog
+    description: Chatting functions provided by the server
+  - name: Calculator
+    description: Computing functions provided by the server
+
+# Paths define API endpoints and operations.
+paths:
+  /:    
+    # GET method for / endpoint.
+    get:
+      tags:
+        - Dialog
+      description: Get a Hello-World greeting.
+      operationId: greet
+      # no request body is needed
+      responses:
+        '200':
+          $ref: '#/components/responses/DialogResponse'
+
+  /chat/{username}:
+    get:
+      tags:
+        - Dialog
+      description: Get a greeting with provided name and institution.
+      operationId: greet_with_info
+      parameters:
+        # this parameter is in the URL path
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 'peter'
+        # this parameter is in the URL query (e.g., /chat/peter?institution=SUSTech)
+        - name: institution
+          in: query
+          required: false
+          schema:
+            type: string
+            example: 'SUSTech'
+      responses:
+        '200':
+          $ref: '#/components/responses/DialogResponse'
+
+  /calculator/mult:
+    post:
+      tags:
+        - Calculator
+      description: Multiply two numbers.
+      operationId: mult
+      requestBody:
+        required: true
+        content:
+          # a JSON type request body
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultRequestBody'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultOp'
+
+# Components define reusable data objects to be used in API operation definitions.
+components:
+  schemas:
+    # An multiplying operation.
+    MultOp:
+      type: object
+      required:
+        - xin
+        - yin
+      properties:
+        xin:
+          type: number
+          format: double
+        yin:
+          type: number
+          format: double
+        result:
+          type: number
+          format: double
+
+    ### Request Body: it is a good habit to separately define a request body object for each request,
+    ### rather than using the same resource object (e.g., MultOp).
+    MultRequestBody:
+      type: object
+      required:
+        - xin
+        - yin
+      properties:
+        xin:
+          type: number
+          format: double
+        yin:
+          type: number
+          format: double
+
+  ### Response: it is a good habit to pre-define reusable responses.
+  responses:
+    DialogResponse:
+      description: Successful Dialog Response
+      content:
+        application/json:
+          schema:
+            type: object
+            required: 
+              - message
+            properties:
+              message:
+                type: string

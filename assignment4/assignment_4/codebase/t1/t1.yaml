@@ -4,3 +4,91 @@
 # pod anti-affinity: pod replicas distributed to different nodes
 # preferred weighted node affinity: (1) powerful nodes; (2) non-backup nodes; (3) backup nodes
 # (EXTRA) how to deploy pods to nodes with taints?
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-dep-t1
+spec:
+  replicas: 1          # 先从 1 个副本开始，后面用 kubectl scale 慢慢扩到 5
+  selector:
+    matchLabels:
+      app: flask-t1
+  template:
+    metadata:
+      labels:
+        app: flask-t1
+    spec:
+      containers:
+      - name: flask
+        image: flask-app:1.0.1      # ← 改成你实际的镜像名
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+
+      # ① Pod Anti-Affinity：所有副本不能在同一个节点
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - flask-t1
+            topologyKey: "kubernetes.io/hostname"
+
+        # ② Node Affinity（Preferred，权重控制调度优先级）
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          # 优先选择 powerful 节点（worker2 / worker3）
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: capability
+                operator: In
+                values:
+                - powerful
+          # 次优先 normal 非 backup 节点（worker）
+          - weight: 50
+            preference:
+              matchExpressions:
+              - key: usage
+                operator: In
+                values:
+                - normal
+          # 最后才选 backup 节点（worker4 / worker5）
+          - weight: 10
+            preference:
+              matchExpressions:
+              - key: usage
+                operator: In
+                values:
+                - backup
+
+      # ③ Tolerations：允许 Pod 调度到带 class=vip:NoSchedule 的 worker3
+      tolerations:
+      - key: "class"
+        operator: "Equal"
+        value: "vip"
+        effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-svc-t1
+spec:
+  selector:
+    app: flask-t1
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: ClusterIP

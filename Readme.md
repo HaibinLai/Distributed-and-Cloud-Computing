@@ -17,10 +17,10 @@ The course contains **four major programming assignments**:
 
 | Assignment | Topic                                                    | Main Techniques                                                                         | PDF Source |
 | ---------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------- |
-| **A1**     | Parallel Matrix Multiplication (OpenMPI + Docker)        | MPI scatter/broadcast/gather, oversubscribed processes, Docker compose testing          |            |
-| **A2**     | SUSTech Merch Store (Microservices + gRPC + JWT + Kafka) | REST API, Flask / FastAPI, gRPC services, PostgreSQL DB pool, JWT auth, Kafka streaming |            |
-| **A3**     | Distributed Batch Processing using Apache Spark          | PySpark RDD/DataFrame, SQL, window interval operations, time-series analysis            |            |
-| **A4**     | Kubernetes Cluster with Kind                             | Deployment, Service, rolling update, scheduling (affinity & taints), load balancing     |            |
+| **A1**     | Parallel Matrix Multiplication (OpenMPI + Docker)        | MPI scatter/broadcast/gather, oversubscribed processes, Docker compose testing          |     ✅         |
+| **A2**     | SUSTech Merch Store (Microservices + gRPC + JWT + Kafka) | REST API, Flask / FastAPI, gRPC services, PostgreSQL DB pool, JWT auth, Kafka streaming |       ✅       |
+| **A3**     | Distributed Batch Processing using Apache Spark          | PySpark RDD/DataFrame, SQL, window interval operations, time-series analysis            |    ✅          |
+| **A4**     | Kubernetes Cluster with Kind                             | Deployment, Service, rolling update, scheduling (affinity & taints), load balancing     |    ✅        |
 
 ---
 

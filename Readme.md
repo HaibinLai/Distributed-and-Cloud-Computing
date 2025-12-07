@@ -2,6 +2,7 @@
 # CS328 — Distributed and Cloud Computing
 
 **By Prof. Georgios Theodoropoulos**
+
 **Student: Haibin Lai (12216112)**
 
 This repository maintains the **slides**, **lab tutorials**, and **assignment materials** for CS328 *Distributed and Cloud Computing*.

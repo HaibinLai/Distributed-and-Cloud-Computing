@@ -1,2 +1,12 @@
 # 1 deployment - 4 pod replicas - 1 flask server per pod
 # 1 service to expose the deployment above
+
+env:
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName

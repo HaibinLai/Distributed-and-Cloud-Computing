@@ -1,0 +1,61 @@
+services:
+  namenode:
+    image: apache/hadoop:3.4.1
+    hostname: namenode
+    command: ["hdfs", "namenode"]
+    ports:
+      - 9870:9870
+    env_file:
+      - ./config
+    environment:
+      ENSURE_NAMENODE_DIR: "/hadoop/dfs/name"
+  
+  resourcemanager:
+    image: apache/hadoop:3.4.1
+    hostname: resourcemanager
+    command: ["yarn", "resourcemanager"]
+    ports:
+      - 8088:8088
+    env_file:
+      - ./config
+
+  datanode-1:
+    image: apache/hadoop:3.4.1
+    hostname: datanode-1
+    # start data node (for hdfs) and node manager (for yarn)
+    command: ["/bin/bash", "-c", "hdfs datanode & yarn nodemanager && tail -f /dev/null"]
+    env_file:
+      - ./config
+    volumes:
+      - ./resources:/opt/hadoop/resources
+      
+  datanode-2:
+    image: apache/hadoop:3.4.1
+    hostname: datanode-2
+    # start data node (for hdfs) and node manager (for yarn)
+    command: ["/bin/bash", "-c", "hdfs datanode & yarn nodemanager && tail -f /dev/null"]
+    env_file:
+      - ./config
+    volumes:
+      - ./resources:/opt/hadoop/resources
+  
+  datanode-3:
+    image: apache/hadoop:3.4.1
+    hostname: datanode-3
+    # start data node (for hdfs) and node manager (for yarn)
+    command: ["/bin/bash", "-c", "hdfs datanode & yarn nodemanager && tail -f /dev/null"]
+    env_file:
+      - ./config
+    volumes:
+      - ./resources:/opt/hadoop/resources
+  
+  datanode-4:
+    image: apache/hadoop:3.4.1
+    hostname: datanode-4
+    # start data node (for hdfs) and node manager (for yarn)
+    command: ["/bin/bash", "-c", "hdfs datanode & yarn nodemanager && tail -f /dev/null"]
+    env_file:
+      - ./config
+    volumes:
+      - ./resources:/opt/hadoop/resources
+
